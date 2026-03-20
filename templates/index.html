@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUPACK Web</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #1e1e2f;
+            --bg-input: #252538;
+            --bg-canvas: #151525;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --border-color: #333;
+            --accent-blue: #00d9ff;
+            --accent-green: #00ff88;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #e8e8e8;
+            --bg-card: #ffffff;
+            --bg-input: #f0f0f0;
+            --bg-canvas: #fafafa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --border-color: #ddd;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            padding: 15px 25px;
+            flex: 1;
+        }
+
+        header {
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        header h1 span {
+            transition: transform 0.2s;
+        }
+
+        header h1 span:hover {
+            transform: scale(1.05);
+        }
+
+        .dna-emoji {
+            cursor: pointer;
+        }
+
+        .mamba-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .mamba-modal.active {
+            display: flex;
+        }
+
+        .mamba-modal-content {
+            background: linear-gradient(135deg, #552583 0%, #FDB927 100%);
+            padding: 40px 60px;
+            border-radius: 16px;
+            text-align: center;
+            animation: mambaIn 0.5s ease;
+            box-shadow: 0 20px 60px rgba(85, 37, 131, 0.6);
+        }
+
+        @keyframes mambaIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .mamba-modal-content h2 {
+            color: #000;
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0 0 15px 0;
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        .mamba-modal-content p {
+            color: rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .mamba-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .mamba-modal-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .header-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .header-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .control-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            height: fit-content;
+            position: sticky;
+            top: 15px;
+        }
+
+        .panel-section { margin-bottom: 20px; }
+
+        .panel-section h3 {
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-section h3::before {
+            content: '';
+            width: 4px;
+            height: 14px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .param-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            color: #1a1a2e;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .analyze-btn:hover { transform: translateY(-2px); }
+        .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .result-panel {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-header h2 { color: var(--accent-green); }
+
+        .result-actions { display: flex; gap: 8px; }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .action-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        .status-badge.ready { background: var(--bg-input); color: var(--text-secondary); }
+        .status-badge.success { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .status-badge.error { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
+
+        .result-content { min-height: 300px; }
+
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-secondary);
+        }
+
+        .result-card {
+            background: var(--bg-input);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .result-card h4 { color: var(--accent-blue); margin-bottom: 12px; }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .result-row:last-child { border-bottom: none; }
+        .result-label { color: var(--text-secondary); }
+        .result-value { color: var(--text-primary); font-family: 'Courier New', monospace; }
+        .energy-value { color: var(--accent-green); font-weight: bold; }
+
+        .structure-viz {
+            background: var(--bg-primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .structure-viz h4 { color: var(--accent-blue); margin-bottom: 12px; }
+
+        .viz-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .viz-control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: var(--bg-input);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .viz-control-group label { margin: 0; }
+        .viz-control-group input[type="range"] { width: 70px; margin: 0; padding: 0; }
+        .viz-control-group span { color: var(--accent-blue); min-width: 25px; }
+
+        #structure-canvas {
+            width: 100%;
+            height: 500px;
+            background: var(--bg-canvas);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .strand-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 100px 40px;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .strand-item input { margin-bottom: 0; }
+
+        .add-strand-btn {
+            padding: 6px 12px;
+            background: var(--bg-input);
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .add-strand-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .remove-btn {
+            padding: 6px;
+            background: transparent;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .remove-btn:hover { background: rgba(255, 68, 68, 0.2); }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .complex-item {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--accent-blue);
+        }
+        .complex-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .complex-name { color: var(--accent-blue); font-weight: 600; }
+        .complex-conc { color: var(--accent-green); }
+        .complex-seq { font-family: 'Courier New', monospace; font-size: 0.8em; color: var(--text-secondary); margin: 6px 0; word-break: break-all; }
+        .complex-struct { font-family: 'Courier New', monospace; font-size: 0.8em; color: var(--text-primary); word-break: break-all; }
+
+        #pairs-canvas { width: 100%; max-width: 400px; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9998;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 450px;
+            width: 90%;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h3 { color: var(--accent-blue); }
+        .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+        .export-options { display: flex; flex-direction: column; gap: 8px; }
+        .export-btn {
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .export-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        /* 底部样式 */
+        footer {
+            text-align: center;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        footer a { color: var(--accent-blue); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        /* 设计结果标签页 */
+        .design-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .design-tab {
+            padding: 8px 15px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .design-tab.active {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        @media (max-width: 1000px) {
+            .main-layout { grid-template-columns: 280px 1fr; }
+        }
+
+        @media (max-width: 800px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .control-panel { position: relative; }
+            header { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .header-right { width: 100%; justify-content: flex-start; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span class="dna-emoji" onclick="showMambaModal()" title="点击查看彩蛋">🧬</span>
+                <span onclick="window.open('https://nupack.org/', '_blank')" title="访问 NUPACK 官网">NUPACK</span>
+                <span onclick="window.open('https://space.bilibili.com/533586737', '_blank')" title="访问作者主页">Web</span>
+            </h1>
+            <div class="header-right">
+                <a href="https://docs.nupack.org/" target="_blank" class="header-btn">📖 <span data-i18n="docs">文档</span></a>
+                <button class="header-btn" onclick="toggleLanguage()" id="lang-btn">EN</button>
+                <button class="header-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+                <button class="header-btn" onclick="openInJupyter()">📓 Jupyter</button>
+                <button class="header-btn" onclick="showExportModal()">📦 <span data-i18n="export">导出</span></button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3 data-i18n="mode">分析模式</h3>
+                    <div class="mode-selector">
+                        <button class="mode-btn active" data-mode="single" onclick="switchMode('single')" data-i18n="single">单链分析</button>
+                        <button class="mode-btn" data-mode="tube" onclick="switchMode('tube')" data-i18n="multi">多链分析</button>
+                        <button class="mode-btn" data-mode="design" onclick="switchMode('design')" data-i18n="design">序列设计</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 data-i18n="params">物理参数</h3>
+                    <label data-i18n="material">材料类型</label>
+                    <select id="material">
+                        <option value="dna">DNA</option>
+                        <option value="rna">RNA</option>
+                    </select>
+                    <div class="param-row">
+                        <div>
+                            <label data-i18n="temp">温度 (°C)</label>
+                            <input type="number" id="temperature" value="37" min="0" max="100">
+                        </div>
+                        <div>
+                            <label>[Na⁺] (M)</label>
+                            <input type="number" id="sodium" value="1.0" min="0.05" max="1.1" step="0.01">
+                        </div>
+                    </div>
+                    <label>[Mg²⁺] (M)</label>
+                    <input type="number" id="magnesium" value="0.0" min="0" max="0.2" step="0.001">
+                </div>
+
+                <div class="panel-section">
+                    <h3 data-i18n="colorSettings">颜色设置</h3>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="colorHint">
+                        配对概率渐变颜色 (低 → 高)
+                    </p>
+                    <div class="param-row">
+                        <div>
+                            <label data-i18n="lowColor">低概率色</label>
+                            <input type="color" id="color-low" value="#1a1a2e" style="height: 36px; padding: 2px;">
+                        </div>
+                        <div>
+                            <label data-i18n="highColor">高概率色</label>
+                            <input type="color" id="color-high" value="#ff3366" style="height: 36px; padding: 2px;">
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; padding: 8px; background: var(--bg-input); border-radius: 6px;">
+                        <div id="gradient-preview" style="height: 20px; border-radius: 4px; margin-bottom: 6px;"></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary);">
+                            <span>0%</span><span>50%</span><span>100%</span>
+                        </div>
+                    </div>
+                    <button class="action-btn" style="width: 100%; margin-top: 8px;" onclick="resetColors()" data-i18n="resetColors">重置默认</button>
+                </div>
+
+                <div class="panel-section" id="single-input">
+                    <h3 data-i18n="seqInput">序列输入</h3>
+                    <label data-i18n="sequence">核酸序列</label>
+                    <textarea id="sequence" placeholder="e.g. ACGTACGT..."></textarea>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-top: -8px;">
+                        <span data-i18n="dnaHint">DNA: A, C, G, T | RNA: A, C, G, U</span>
+                    </p>
+                    
+                    <h3 style="margin-top: 15px;" data-i18n="suboptSettings">次优结构分析</h3>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="suboptHint">
+                        分析能量在 MFE 附近的多种可能结构
+                    </p>
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                        <input type="checkbox" id="enable-subopt" onchange="toggleSuboptOptions()">
+                        <span data-i18n="enableSubopt">启用次优结构分析</span>
+                    </label>
+                    <div id="subopt-options" class="hidden">
+                        <div class="param-row">
+                            <div>
+                                <label data-i18n="energyGap">能量窗口 (kcal/mol)</label>
+                                <input type="number" id="energy-gap" value="3.0" min="0.5" max="10" step="0.5">
+                            </div>
+                            <div>
+                                <label data-i18n="maxStructures">最大结构数</label>
+                                <input type="number" id="max-structures" value="20" min="1" max="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section hidden" id="tube-input">
+                    <h3 data-i18n="strandList">链列表</h3>
+                    <div id="strand-list">
+                        <div class="strand-item">
+                            <input type="text" placeholder="Name" value="Strand_A" class="strand-name">
+                            <input type="text" placeholder="Sequence" class="strand-seq">
+                            <input type="number" placeholder="Conc (M)" value="1e-6" class="strand-conc">
+                            <button class="remove-btn" onclick="removeStrand(this)">×</button>
+                        </div>
+                    </div>
+                    <button class="add-strand-btn" onclick="addStrand()">+ <span data-i18n="addStrand">添加链</span></button>
+                    <label style="margin-top: 12px;" data-i18n="maxSize">最大复合物大小</label>
+                    <input type="number" id="max-size" value="2" min="1" max="6">
+                </div>
+
+                <div class="panel-section hidden" id="design-input">
+                    <h3 data-i18n="domains">结构域定义</h3>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="domainHint">
+                        N=任意, A/T/G/C=固定, R=嘌呤, Y=嘧啶
+                    </p>
+                    <div id="domain-list">
+                        <div class="strand-item" style="grid-template-columns: 50px 1fr 40px;">
+                            <input type="text" placeholder="Name" value="a" class="domain-name">
+                            <input type="text" placeholder="Pattern" value="N10" class="domain-seq">
+                            <button class="remove-btn" onclick="removeDomain(this)">×</button>
+                        </div>
+                    </div>
+                    <button class="add-strand-btn" onclick="addDomain()">+ <span data-i18n="addDomain">添加结构域</span></button>
+
+                    <h3 style="margin-top: 15px;" data-i18n="targetStrands">目标链定义</h3>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="strandHint">
+                        结构域用逗号分隔，~a 表示 a 的反向互补
+                    </p>
+                    <div id="target-strand-list">
+                        <div class="strand-item" style="grid-template-columns: 60px 1fr 40px;">
+                            <input type="text" placeholder="Name" value="A" class="tstrand-name">
+                            <input type="text" placeholder="Domains" value="a" class="tstrand-domains">
+                            <button class="remove-btn" onclick="removeTargetStrand(this)">×</button>
+                        </div>
+                    </div>
+                    <button class="add-strand-btn" onclick="addTargetStrand()">+ <span data-i18n="addTargetStrand">添加目标链</span></button>
+
+                    <h3 style="margin-top: 15px;" data-i18n="targetComplex">目标复合物</h3>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="structHint">
+                        结构: . = 未配对, ( ) = 配对, + = 链分隔 | 点击「自动生成」智能计算
+                    </p>
+                    <div id="target-complex-list">
+                        <div style="background: var(--bg-input); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                            <div class="strand-item" style="grid-template-columns: 60px 1fr 80px;">
+                                <input type="text" placeholder="Name" value="AB" class="tcomplex-name">
+                                <input type="text" placeholder="Strands" value="A,B" class="tcomplex-strands">
+                                <button class="action-btn" onclick="autoGenerateStructure(this)" style="font-size: 11px; padding: 4px 8px;">✨ 自动生成</button>
+                            </div>
+                            <input type="text" placeholder="Structure (可自动生成)" value="..........+.........." class="tcomplex-structure" style="margin-top: 5px; margin-bottom: 0;">
+                        </div>
+                    </div>
+                    <button class="add-strand-btn" onclick="addTargetComplex()">+ <span data-i18n="addComplex">添加目标复合物</span></button>
+
+                    <label style="margin-top: 12px;" data-i18n="trials">设计尝试次数</label>
+                    <input type="number" id="design-trials" value="3" min="1" max="20">
+                </div>
+
+                <button class="analyze-btn" onclick="runAnalysis()" id="analyze-btn" data-i18n="analyze">开始分析</button>
+            </div>
+
+            <div class="result-panel">
+                <div class="result-header">
+                    <h2 data-i18n="results">分析结果</h2>
+                    <div class="result-actions">
+                        <button class="action-btn" onclick="toggleFullscreen()" id="fullscreen-btn">⛶ <span data-i18n="fullscreen">全屏</span></button>
+                    </div>
+                    <span class="status-badge ready" id="status" data-i18n="ready">就绪</span>
+                </div>
+
+                <div class="result-content" id="result-content">
+                    <div class="placeholder">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="60" height="60" style="opacity:0.3">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                        <p data-i18n="placeholder">输入序列并点击"开始分析"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Web app by Victor.Guo | Powered by <a href="https://openclaw.ai" target="_blank">OpenClaw</a>
+    </footer>
+
+    <!-- Mamba 彩蛋模态框 -->
+    <div class="mamba-modal" id="mamba-modal" onclick="closeMambaModal()">
+        <span class="mamba-modal-close">&times;</span>
+        <div class="mamba-modal-content" onclick="event.stopPropagation()">
+            <h2>Mamba Never Out</h2>
+            <p>🐍 24 | 8 💜💛</p>
+        </div>
+    </div>
+
+    <!-- 导出模态框 -->
+    <div class="modal-overlay" id="export-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="exportTitle">📦 导出结果</h3>
+                <button class="modal-close" onclick="closeExportModal()">×</button>
+            </div>
+            <div class="export-options">
+                <button class="export-btn" onclick="exportImage()">🖼️ <span data-i18n="exportImg">导出结构图 (PNG)</span></button>
+                <button class="export-btn" onclick="exportJSON()">📊 <span data-i18n="exportJson">导出原始数据 (JSON)</span></button>
+                <button class="export-btn" onclick="exportCSV()">📈 <span data-i18n="exportCsv">导出配对概率矩阵 (CSV)</span></button>
+                <button class="export-btn" onclick="exportAll()">📦 <span data-i18n="exportAll">导出全部</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 多语言支持 ====================
+        const i18n = {
+            zh: {
+                docs: '文档', export: '导出', mode: '分析模式', single: '单链分析', multi: '多链分析',
+                design: '序列设计', params: '物理参数', material: '材料类型', temp: '温度 (°C)',
+                seqInput: '序列输入', sequence: '核酸序列', dnaHint: 'DNA: A, C, G, T | RNA: A, C, G, U',
+                strandList: '链列表', addStrand: '添加链', maxSize: '最大复合物大小',
+                domains: '结构域定义', domainHint: 'N=任意, A/T/G/C=固定, R=嘌呤, Y=嘧啶',
+                addDomain: '添加结构域', targetStrands: '目标链定义', strandHint: '结构域用逗号分隔，~a 表示反向互补',
+                addTargetStrand: '添加目标链', targetComplex: '目标复合物', structHint: '结构: . = 未配对, ( ) = 配对, + = 链分隔',
+                addComplex: '添加目标复合物', trials: '设计尝试次数', analyze: '开始分析', results: '分析结果',
+                fullscreen: '全屏', ready: '就绪', placeholder: '输入序列并点击"开始分析"',
+                exportTitle: '📦 导出结果', exportImg: '导出结构图 (PNG)', exportJson: '导出原始数据 (JSON)',
+                exportCsv: '导出配对概率矩阵 (CSV)', exportAll: '导出全部', analyzing: '分析中...', designing: '设计中...',
+                complete: '完成', error: '错误', bestDesign: '🏆 最佳设计', domainSeq: '结构域序列',
+                strandSeq: '链序列', analyzeDesign: '🔬 分析此设计结果', viewDesign: '查看设计结果',
+                colorSettings: '颜色设置', colorHint: '配对概率渐变颜色 (低 → 高)',
+                lowColor: '低概率色', highColor: '高概率色', resetColors: '重置默认',
+                suboptSettings: '次优结构分析', suboptHint: '分析能量在 MFE 附近的多种可能结构',
+                enableSubopt: '启用次优结构分析', energyGap: '能量窗口 (kcal/mol)',
+                maxStructures: '最大结构数', suboptResults: '次优结构结果',
+                structureDist: '结构分布', structName: '结构', probability: '概率',
+                energy: '能量', viewStructure: '查看结构详情'
+            },
+            en: {
+                docs: 'Docs', export: 'Export', mode: 'Mode', single: 'Single', multi: 'Multi-strand',
+                design: 'Design', params: 'Parameters', material: 'Material', temp: 'Temperature (°C)',
+                seqInput: 'Sequence Input', sequence: 'Nucleic Acid Sequence', dnaHint: 'DNA: A, C, G, T | RNA: A, C, G, U',
+                strandList: 'Strand List', addStrand: 'Add Strand', maxSize: 'Max Complex Size',
+                domains: 'Domain Definition', domainHint: 'N=any, A/T/G/C=fixed, R=purine, Y=pyrimidine',
+                addDomain: 'Add Domain', targetStrands: 'Target Strands', strandHint: 'Domains separated by comma, ~a = reverse complement',
+                addTargetStrand: 'Add Strand', targetComplex: 'Target Complex', structHint: 'Structure: . = unpaired, ( ) = paired, + = strand break',
+                addComplex: 'Add Complex', trials: 'Design Trials', analyze: 'Start Analysis', results: 'Results',
+                fullscreen: 'Fullscreen', ready: 'Ready', placeholder: 'Enter sequence and click "Start Analysis"',
+                exportTitle: '📦 Export Results', exportImg: 'Export Structure (PNG)', exportJson: 'Export Data (JSON)',
+                exportCsv: 'Export Pairs Matrix (CSV)', exportAll: 'Export All', analyzing: 'Analyzing...', designing: 'Designing...',
+                complete: 'Done', error: 'Error', bestDesign: '🏆 Best Design', domainSeq: 'Domain Sequences',
+                strandSeq: 'Strand Sequences', analyzeDesign: '🔬 Analyze This Design', viewDesign: 'View Design Results',
+                colorSettings: 'Color Settings', colorHint: 'Pairing probability gradient (Low → High)',
+                lowColor: 'Low Prob', highColor: 'High Prob', resetColors: 'Reset Default',
+                suboptSettings: 'Suboptimal Structures', suboptHint: 'Analyze multiple possible structures near MFE energy',
+                enableSubopt: 'Enable suboptimal analysis', energyGap: 'Energy gap (kcal/mol)',
+                maxStructures: 'Max structures', suboptResults: 'Suboptimal Structures',
+                structureDist: 'Structure Distribution', structName: 'Structure', probability: 'Probability',
+                energy: 'Energy', viewStructure: 'View Structure'
+            }
+        };
+
+        let currentLang = 'zh';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('lang-btn').textContent = currentLang === 'zh' ? 'EN' : '中文';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) {
+                    el.textContent = i18n[currentLang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[currentLang][key]) {
+                    el.placeholder = i18n[currentLang][key];
+                }
+            });
+        }
+
+        // ==================== 全局状态 ====================
+        let currentMode = 'single';
+        let currentTheme = 'dark';
+        let analysisResult = null;
+        let tubeAnalysisData = null;
+        let suboptAnalysisData = null; // 次优结构分析数据
+        let designResult = null; // 保存设计结果
+        let currentStructureData = null;
+        let currentDetailStructureData = null;
+        let vizParams = { tension: 1.0, backboneWidth: 3, pairWidth: 4 };
+        
+        // 配对概率颜色设置 - 默认使用更显眼的颜色
+        let gradientColors = {
+            low: '#1a1a2e',   // 深色（低概率）
+            high: '#ff3366'   // 亮粉红色（高概率）
+        };
+        
+        // 预设的醒目颜色方案
+        const colorPresets = {
+            default: { low: '#1a1a2e', high: '#ff3366' },      // 深色 → 亮粉红
+            fire: { low: '#1a1a2e', high: '#ff6600' },         // 深色 → 橙色
+            emerald: { low: '#1a1a2e', high: '#00ff88' },      // 深色 → 翠绿
+            electric: { low: '#1a1a2e', high: '#00d9ff' },     // 深色 → 电蓝
+            sunset: { low: '#2d1b4e', high: '#ff4757' },       // 深紫 → 红橙
+            neon: { low: '#0a0a0a', high: '#39ff14' }          // 黑色 → 霓虹绿
+        };
+
+        // ==================== 颜色设置 ====================
+        function updateGradientPreview() {
+            const preview = document.getElementById('gradient-preview');
+            if (preview) {
+                preview.style.background = `linear-gradient(90deg, ${gradientColors.low}, ${gradientColors.high})`;
+            }
+        }
+        
+        function onColorChange() {
+            gradientColors.low = document.getElementById('color-low').value;
+            gradientColors.high = document.getElementById('color-high').value;
+            updateGradientPreview();
+            
+            // 如果已有分析结果，重新绘制
+            if (currentStructureData) {
+                drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+                drawHeatmap(currentStructureData.sequence, currentStructureData.pairsMatrix);
+            }
+        }
+        
+        function resetColors() {
+            gradientColors = { ...colorPresets.default };
+            document.getElementById('color-low').value = gradientColors.low;
+            document.getElementById('color-high').value = gradientColors.high;
+            updateGradientPreview();
+            
+            // 如果已有分析结果，重新绘制
+            if (currentStructureData) {
+                drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+                drawHeatmap(currentStructureData.sequence, currentStructureData.pairsMatrix);
+            }
+        }
+        
+        // 获取当前颜色比例尺
+        function getProbColorScale() {
+            return d3.scaleSequential()
+                .domain([0, 1])
+                .interpolator(d3.interpolate(gradientColors.low, gradientColors.high));
+        }
+
+        // ==================== Mamba 彩蛋模态框 ====================
+        function showMambaModal() {
+            document.getElementById('mamba-modal').classList.add('active');
+        }
+
+        function closeMambaModal() {
+            document.getElementById('mamba-modal').classList.remove('active');
+        }
+
+        // ==================== 主题切换 ====================
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            document.getElementById('theme-btn').textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // ==================== 模式切换 ====================
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            document.getElementById('single-input').classList.toggle('hidden', mode !== 'single');
+            document.getElementById('tube-input').classList.toggle('hidden', mode !== 'tube');
+            document.getElementById('design-input').classList.toggle('hidden', mode !== 'design');
+            document.getElementById('analyze-btn').textContent = i18n[currentLang][mode === 'design' ? 'design' : 'analyze'];
+        }
+
+        // ==================== 次优结构选项切换 ====================
+        function toggleSuboptOptions() {
+            const checkbox = document.getElementById('enable-subopt');
+            const options = document.getElementById('subopt-options');
+            options.classList.toggle('hidden', !checkbox.checked);
+        }
+
+        // ==================== 链管理 ====================
+        function addStrand() {
+            const list = document.getElementById('strand-list');
+            const index = list.children.length;
+            const item = document.createElement('div');
+            item.className = 'strand-item';
+            item.innerHTML = `
+                <input type="text" placeholder="Name" value="Strand_${String.fromCharCode(65 + index)}" class="strand-name">
+                <input type="text" placeholder="Sequence" class="strand-seq">
+                <input type="number" placeholder="Conc (M)" value="1e-6" class="strand-conc">
+                <button class="remove-btn" onclick="removeStrand(this)">×</button>`;
+            list.appendChild(item);
+        }
+
+        function removeStrand(btn) {
+            const list = document.getElementById('strand-list');
+            if (list.children.length > 1) btn.parentElement.remove();
+        }
+
+        // ==================== 设计模式管理 ====================
+        function addDomain() {
+            const list = document.getElementById('domain-list');
+            const item = document.createElement('div');
+            item.className = 'strand-item';
+            item.style.gridTemplateColumns = '50px 1fr 40px';
+            item.innerHTML = `
+                <input type="text" placeholder="Name" value="" class="domain-name">
+                <input type="text" placeholder="Pattern" value="N10" class="domain-seq">
+                <button class="remove-btn" onclick="removeDomain(this)">×</button>`;
+            list.appendChild(item);
+        }
+
+        function removeDomain(btn) {
+            const list = document.getElementById('domain-list');
+            if (list.children.length > 1) btn.parentElement.remove();
+        }
+
+        function addTargetStrand() {
+            const list = document.getElementById('target-strand-list');
+            const item = document.createElement('div');
+            item.className = 'strand-item';
+            item.style.gridTemplateColumns = '60px 1fr 40px';
+            item.innerHTML = `
+                <input type="text" placeholder="Name" value="" class="tstrand-name">
+                <input type="text" placeholder="Domains" value="" class="tstrand-domains">
+                <button class="remove-btn" onclick="removeTargetStrand(this)">×</button>`;
+            list.appendChild(item);
+        }
+
+        function removeTargetStrand(btn) {
+            const list = document.getElementById('target-strand-list');
+            if (list.children.length > 1) btn.parentElement.remove();
+        }
+
+        function addTargetComplex() {
+            const list = document.getElementById('target-complex-list');
+            const item = document.createElement('div');
+            item.style.cssText = 'background: var(--bg-input); border-radius: 6px; padding: 10px; margin-bottom: 8px;';
+            item.innerHTML = `
+                <div class="strand-item" style="grid-template-columns: 60px 1fr 80px;">
+                    <input type="text" placeholder="Name" value="" class="tcomplex-name">
+                    <input type="text" placeholder="Strands" value="" class="tcomplex-strands">
+                    <button class="action-btn" onclick="autoGenerateStructure(this)" style="font-size: 11px; padding: 4px 8px;">✨ 自动生成</button>
+                </div>
+                <input type="text" placeholder="Structure (可自动生成)" value="" class="tcomplex-structure" style="margin-top: 5px; margin-bottom: 0;">`;
+            list.appendChild(item);
+        }
+
+        // ==================== 智能生成结构 ====================
+        function autoGenerateStructure(btn) {
+            // 获取当前复合物的链信息
+            const complexDiv = btn.closest('div[style*="background"]');
+            const strandsInput = complexDiv.querySelector('.tcomplex-strands');
+            const structureInput = complexDiv.querySelector('.tcomplex-structure');
+            
+            const strandNames = strandsInput.value.split(',').map(s => s.trim()).filter(s => s);
+            if (strandNames.length === 0) {
+                alert(currentLang === 'zh' ? '请输入链名称' : 'Please enter strand names');
+                return;
+            }
+
+            // 收集定义的链和结构域信息
+            const strandDefs = {};
+            document.querySelectorAll('#target-strand-list .strand-item').forEach(item => {
+                const name = item.querySelector('.tstrand-name').value.trim();
+                const domains = item.querySelector('.tstrand-domains').value.trim();
+                if (name && domains) {
+                    strandDefs[name] = domains.split(',').map(d => d.trim());
+                }
+            });
+
+            // 收集结构域长度
+            const domainLengths = {};
+            document.querySelectorAll('#domain-list .strand-item').forEach(item => {
+                const name = item.querySelector('.domain-name').value.trim();
+                const seq = item.querySelector('.domain-seq').value.trim();
+                if (name && seq) {
+                    let length = 0;
+                    let i = 0;
+                    while (i < seq.length) {
+                        const char = seq[i].toUpperCase();
+                        if (char === 'N' || char === 'R' || char === 'Y') {
+                            let numStr = '';
+                            let j = i + 1;
+                            while (j < seq.length && /\d/.test(seq[j])) {
+                                numStr += seq[j];
+                                j++;
+                            }
+                            length += numStr ? parseInt(numStr) : 1;
+                            i = j;
+                        } else if (['A', 'T', 'G', 'C', 'U'].includes(char)) {
+                            length += 1;
+                            i++;
+                        } else {
+                            i++;
+                        }
+                    }
+                    domainLengths[name] = length;
+                }
+            });
+
+            // 分析所有链的结构域配对关系
+            // 规则：~x 是 x 的反向互补，它们会配对
+            // 配对时：先出现的域用 (，后出现的域用 )
+            const allDomains = []; // 按顺序记录所有域及其链索引
+            strandNames.forEach((strandName, strandIndex) => {
+                const domains = strandDefs[strandName];
+                if (!domains) return;
+                domains.forEach(domainName => {
+                    const isComplement = domainName.startsWith('~');
+                    const baseName = isComplement ? domainName.substring(1) : domainName;
+                    allDomains.push({
+                        domainName,
+                        baseName,
+                        isComplement,
+                        strandIndex,
+                        length: domainLengths[baseName] || 10
+                    });
+                });
+            });
+
+            // 确定每个域是配对还是不配对
+            // 找出配对关系：一个正向域和一个反向互补域配对
+            const domainStatus = {}; // domainName -> 'open' | 'close' | 'unpaired'
+            const baseNameUsed = {}; // baseName -> 'opened' | 'closed' | null
+
+            allDomains.forEach(d => {
+                const key = d.domainName;
+                const base = d.baseName;
+                
+                if (d.isComplement) {
+                    // 反向互补域
+                    if (baseNameUsed[base] === 'opened') {
+                        domainStatus[key] = 'close';
+                        baseNameUsed[base] = 'closed';
+                    } else {
+                        domainStatus[key] = 'unpaired';
+                    }
+                } else {
+                    // 正向域
+                    if (baseNameUsed[base] === undefined || baseNameUsed[base] === null) {
+                        // 检查后面是否有对应的反向互补域
+                        const hasComplement = allDomains.some(other => 
+                            other !== d && 
+                            other.baseName === base && 
+                            other.isComplement
+                        );
+                        if (hasComplement) {
+                            domainStatus[key] = 'open';
+                            baseNameUsed[base] = 'opened';
+                        } else {
+                            domainStatus[key] = 'unpaired';
+                            baseNameUsed[base] = 'unpaired';
+                        }
+                    } else {
+                        domainStatus[key] = 'unpaired';
+                    }
+                }
+            });
+
+            // 生成结构字符串
+            let totalStructure = '';
+            let domainIndex = 0;
+
+            strandNames.forEach((strandName, strandIndex) => {
+                const domains = strandDefs[strandName];
+                if (!domains) return;
+
+                domains.forEach(domainName => {
+                    const length = domainLengths[domainName.replace('~', '')] || 10;
+                    const status = domainStatus[domainName] || 'unpaired';
+
+                    if (status === 'open') {
+                        totalStructure += '('.repeat(length);
+                    } else if (status === 'close') {
+                        totalStructure += ')'.repeat(length);
+                    } else {
+                        totalStructure += '.'.repeat(length);
+                    }
+                });
+
+                if (strandIndex < strandNames.length - 1) {
+                    totalStructure += '+';
+                }
+            });
+
+            structureInput.value = totalStructure;
+        }
+
+        // ==================== 分析请求 ====================
+        async function runAnalysis() {
+            const btn = document.getElementById('analyze-btn');
+            const status = document.getElementById('status');
+            const content = document.getElementById('result-content');
+
+            const params = {
+                material: document.getElementById('material').value,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                sodium: parseFloat(document.getElementById('sodium').value),
+                magnesium: parseFloat(document.getElementById('magnesium').value)
+            };
+
+            btn.disabled = true;
+            status.className = 'status-badge ready';
+            status.textContent = i18n[currentLang][currentMode === 'design' ? 'designing' : 'analyzing'];
+            content.innerHTML = `<div class="loading"><div class="spinner"></div><p style="margin-top: 10px; color: var(--text-secondary);">${status.textContent}</p></div>`;
+
+            try {
+                let response;
+                if (currentMode === 'single') {
+                    const sequence = document.getElementById('sequence').value.trim();
+                    if (!sequence) throw new Error(currentLang === 'zh' ? '请输入序列' : 'Please enter a sequence');
+                    
+                    // 检查是否启用次优结构分析
+                    const enableSubopt = document.getElementById('enable-subopt').checked;
+                    if (enableSubopt) {
+                        params.energy_gap = parseFloat(document.getElementById('energy-gap').value);
+                        params.max_structures = parseInt(document.getElementById('max-structures').value);
+                        response = await fetch('/api/analyze/subopt', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({...params, sequence})
+                        });
+                    } else {
+                        response = await fetch('/api/analyze/single', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({...params, sequence})
+                        });
+                    }
+                } else if (currentMode === 'tube') {
+                    const strandItems = document.querySelectorAll('#strand-list .strand-item');
+                    const strands = [];
+                    strandItems.forEach(item => {
+                        const name = item.querySelector('.strand-name').value.trim();
+                        const seq = item.querySelector('.strand-seq').value.trim();
+                        const conc = item.querySelector('.strand-conc').value;
+                        if (seq) strands.push({name, sequence: seq, concentration: parseFloat(conc)});
+                    });
+                    if (strands.length === 0) throw new Error(currentLang === 'zh' ? '请至少添加一条链' : 'Add at least one strand');
+                    params.max_size = parseInt(document.getElementById('max-size').value);
+                    response = await fetch('/api/analyze/tube', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({...params, strands})
+                    });
+                } else if (currentMode === 'design') {
+                    const domains = [], strands = [], complexes = [];
+                    document.querySelectorAll('#domain-list .strand-item').forEach(item => {
+                        const name = item.querySelector('.domain-name').value.trim();
+                        const seq = item.querySelector('.domain-seq').value.trim();
+                        if (name && seq) domains.push({name, sequence: seq});
+                    });
+                    document.querySelectorAll('#target-strand-list .strand-item').forEach(item => {
+                        const name = item.querySelector('.tstrand-name').value.trim();
+                        const domainsStr = item.querySelector('.tstrand-domains').value.trim();
+                        if (name && domainsStr) strands.push({name, domains: domainsStr.split(',').map(d => d.trim())});
+                    });
+                    document.querySelectorAll('#target-complex-list > div').forEach(item => {
+                        const name = item.querySelector('.tcomplex-name').value.trim();
+                        const strandsStr = item.querySelector('.tcomplex-strands').value.trim();
+                        const structure = item.querySelector('.tcomplex-structure').value.trim();
+                        if (name && strandsStr && structure) complexes.push({name, strands: strandsStr.split(',').map(s => s.trim()), structure});
+                    });
+                    if (domains.length === 0) throw new Error(currentLang === 'zh' ? '请定义至少一个结构域' : 'Define at least one domain');
+                    if (strands.length === 0) throw new Error(currentLang === 'zh' ? '请定义至少一条目标链' : 'Define at least one strand');
+                    if (complexes.length === 0) throw new Error(currentLang === 'zh' ? '请定义至少一个目标复合物' : 'Define at least one complex');
+                    params.trials = parseInt(document.getElementById('design-trials').value);
+                    response = await fetch('/api/design/complex', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({...params, domains, strands, complexes})
+                    });
+                }
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                analysisResult = data;
+                status.className = 'status-badge success';
+                status.textContent = i18n[currentLang].complete;
+
+                if (currentMode === 'single') {
+                    // 判断是次优结构分析还是普通分析
+                    if (data.structures && data.structures.length > 0) {
+                        displaySuboptResult(data);
+                    } else {
+                        displaySingleResult(data);
+                    }
+                }
+                else if (currentMode === 'tube') displayTubeResult(data);
+                else if (currentMode === 'design') { designResult = data; displayDesignResult(data); }
+
+            } catch (error) {
+                status.className = 'status-badge error';
+                status.textContent = i18n[currentLang].error;
+                content.innerHTML = `<div class="result-card"><h4>❌ ${error.message}</h4></div>`;
+            } finally { btn.disabled = false; }
+        }
+
+        // ==================== 结果显示 ====================
+        function displaySingleResult(data) {
+            currentStructureData = { sequence: data.sequence, structure: data.mfe_structure, pairsMatrix: data.pairs_matrix };
+            const content = document.getElementById('result-content');
+            content.innerHTML = `
+                <div class="result-card">
+                    <h4>📊 ${currentLang === 'zh' ? '基本信息' : 'Basic Info'}</h4>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value">${data.sequence}</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '长度' : 'Length'}</span><span class="result-value">${data.length} nt</span></div>
+                    <div class="result-row"><span class="result-label">MFE ${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value">${data.mfe_structure}</span></div>
+                    <div class="result-row"><span class="result-label">MFE ${currentLang === 'zh' ? '能量' : 'Energy'}</span><span class="result-value energy-value">${data.mfe_energy.toFixed(2)} kcal/mol</span></div>
+                </div>
+                <div id="base-info-panel"></div>
+                <div class="structure-viz">
+                    <h4>🧬 ${currentLang === 'zh' ? '二级结构可视化' : 'Secondary Structure'}</h4>
+                    <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '💡 点击碱基查看配对概率详情' : '💡 Click a base to view pairing probabilities'}</p>
+                    <div class="viz-controls">
+                        <button class="action-btn" onclick="fixLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button>
+                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="tension-slider" min="0.5" max="2" step="0.1" value="1" onchange="updateTension(this.value)"><span id="tension-value">1.0</span></div>
+                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="linewidth-slider" min="1" max="6" step="0.5" value="3" onchange="updateLineWidth(this.value)"><span id="linewidth-value">3</span></div>
+                    </div>
+                    <div id="structure-canvas"></div>
+                </div>
+                <div class="structure-viz" style="margin-top: 15px;">
+                    <h4>🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
+                    <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高' : 'Brighter color indicates higher pairing probability'}</p>
+                    <div id="heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
+                </div>`;
+            drawStructureForce(data.sequence, data.mfe_structure, data.pairs_matrix);
+            drawHeatmap(data.sequence, data.pairs_matrix);
+        }
+
+        // 绘制配对概率热力图
+        function drawHeatmap(sequence, pairsMatrix) {
+            const container = document.getElementById('heatmap-canvas');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const n = sequence.length;
+            const cellSize = Math.min(25, Math.max(15, 400 / n));
+            const width = n * cellSize + 60;
+            const height = n * cellSize + 40;
+
+            const svg = d3.select(container).append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // 颜色比例尺
+            const colorScale = getProbColorScale();
+
+            // 绘制单元格
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const prob = pairsMatrix[i][j];
+                    svg.append('rect')
+                        .attr('x', j * cellSize + 40)
+                        .attr('y', i * cellSize + 25)
+                        .attr('width', cellSize - 1)
+                        .attr('height', cellSize - 1)
+                        .attr('fill', colorScale(prob))
+                        .attr('stroke', 'var(--border-color)')
+                        .attr('stroke-width', 0.5)
+                        .on('mouseover', function() {
+                            d3.select(this).attr('stroke', '#fff').attr('stroke-width', 2);
+                        })
+                        .on('mouseout', function() {
+                            d3.select(this).attr('stroke', 'var(--border-color)').attr('stroke-width', 0.5);
+                        })
+                        .append('title')
+                        .text(`${sequence[i]}${i+1} - ${sequence[j]}${j+1}: ${(prob * 100).toFixed(2)}%`);
+                }
+            }
+
+            // 绘制行标签（碱基位置）
+            for (let i = 0; i < n; i++) {
+                svg.append('text')
+                    .attr('x', 35)
+                    .attr('y', i * cellSize + 25 + cellSize / 2)
+                    .attr('text-anchor', 'end')
+                    .attr('fill', 'var(--text-secondary)')
+                    .attr('font-size', '10px')
+                    .text(`${sequence[i]}${i + 1}`);
+            }
+
+            // 绘制列标签（碱基位置）
+            for (let j = 0; j < n; j++) {
+                svg.append('text')
+                    .attr('x', j * cellSize + 40 + cellSize / 2)
+                    .attr('y', 15)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'var(--text-secondary)')
+                    .attr('font-size', '10px')
+                    .text(`${sequence[j]}${j + 1}`);
+            }
+        }
+
+        function displayTubeResult(data) {
+            tubeAnalysisData = data;
+            const content = document.getElementById('result-content');
+            const totalConc = data.complexes.reduce((sum, c) => sum + c.concentration, 0);
+            content.innerHTML = `
+                <div class="result-card">
+                    <h4>📊 ${currentLang === 'zh' ? '分析概览' : 'Overview'}</h4>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '复合物总数' : 'Total Complexes'}</span><span class="result-value">${data.total_complexes}</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '总浓度' : 'Total Conc'}</span><span class="result-value">${(totalConc * 1e9).toFixed(2)} nM</span></div>
+                </div>
+                <div class="structure-viz">
+                    <h4>🥧 ${currentLang === 'zh' ? '复合物分布' : 'Complex Distribution'}</h4>
+                    <div id="pie-chart-container" style="display: flex; align-items: flex-start;">
+                        <div id="pie-canvas" style="width: 300px; height: 300px;"></div>
+                        <div id="pie-legend" style="margin-left: 15px; flex: 1;"></div>
+                    </div>
+                </div>
+                <div id="complex-detail-view" style="margin-top: 15px;"></div>`;
+            drawPieChart(data.complexes, totalConc);
+        }
+
+        function displaySuboptResult(data) {
+            suboptAnalysisData = data;
+            currentStructureData = { sequence: data.sequence, structure: data.structures[0].structure, pairsMatrix: data.pairs_matrix };
+            const content = document.getElementById('result-content');
+            content.innerHTML = `
+                <div class="result-card">
+                    <h4>📊 ${currentLang === 'zh' ? '次优结构分析概览' : 'Suboptimal Analysis Overview'}</h4>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value">${data.sequence}</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '长度' : 'Length'}</span><span class="result-value">${data.length} nt</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构数量' : 'Structures Found'}</span><span class="result-value">${data.total_structures}</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量窗口' : 'Energy Gap'}</span><span class="result-value">${data.energy_gap} kcal/mol</span></div>
+                </div>
+                <div class="structure-viz">
+                    <h4>🥧 ${currentLang === 'zh' ? '结构分布' : 'Structure Distribution'}</h4>
+                    <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '💡 悬停预览结构，点击查看详情' : '💡 Hover to preview, click for details'}</p>
+                    <div id="pie-chart-container" style="display: flex; align-items: flex-start;">
+                        <div id="pie-canvas" style="width: 300px; height: 300px;"></div>
+                        <div id="pie-legend" style="margin-left: 15px; flex: 1;"></div>
+                    </div>
+                </div>
+                <div id="complex-detail-view" style="margin-top: 15px;"></div>
+                <div class="structure-viz" style="margin-top: 15px;">
+                    <h4>🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
+                    <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高（综合所有结构）' : 'Brighter color indicates higher pairing probability (ensemble average)'}</p>
+                    <div id="heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
+                </div>`;
+            drawSuboptPieChart(data.structures);
+            drawHeatmap(data.sequence, data.pairs_matrix);
+        }
+
+        function drawSuboptPieChart(structures) {
+            const container = document.getElementById('pie-canvas');
+            if (!container) return;
+            const width = 300, height = 300, radius = Math.min(width, height) / 2 - 15;
+            container.innerHTML = '';
+
+            const svg = d3.select('#pie-canvas').append('svg').attr('width', width).attr('height', height);
+            const g = svg.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+            const colors = ['#ff3366', '#ff6b6b', '#ffa502', '#ffe66d', '#00ff88', '#00d9ff', '#a855f7', '#f97316', '#06d6a0', '#118ab2'];
+            // 取前10个结构显示
+            const displayStructures = structures.slice(0, 10);
+            const totalProb = displayStructures.reduce((sum, s) => sum + s.probability, 0);
+            const pieData = displayStructures.map((s, i) => ({ 
+                ...s, 
+                color: colors[i % colors.length], 
+                displayProb: s.probability / totalProb // 归一化显示概率
+            }));
+
+            const pie = d3.pie().value(d => d.displayProb).sort(null);
+            const arc = d3.arc().innerRadius(0).outerRadius(radius);
+            const arcHover = d3.arc().innerRadius(0).outerRadius(radius + 10);
+
+            const tooltip = d3.select('#pie-canvas').append('div').style('position', 'absolute').style('visibility', 'hidden').style('background', 'rgba(0,0,0,0.9)').style('border', '1px solid var(--accent-blue)').style('border-radius', '6px').style('padding', '8px').style('font-size', '11px').style('color', '#fff');
+
+            const previewDiv = d3.select('#pie-legend').append('div').style('background', 'var(--bg-primary)').style('border-radius', '6px').style('padding', '10px').style('min-height', '150px');
+            previewDiv.html(`<div style="color: var(--text-secondary); text-align: center; padding: 15px;">${currentLang === 'zh' ? '悬停查看预览' : 'Hover to preview'}</div>`);
+
+            g.selectAll('.arc').data(pie(pieData)).enter().append('path').attr('d', arc).attr('fill', d => d.data.color).attr('stroke', 'var(--bg-primary)').attr('stroke-width', 2).style('cursor', 'pointer')
+                .on('mouseover', function(e, d) {
+                    d3.select(this).transition().duration(150).attr('d', arcHover);
+                    tooltip.style('visibility', 'visible').html(`<div style="color:${d.data.color};font-weight:bold">${i18n[currentLang].structName} #${d.data.index}</div><div>${i18n[currentLang].probability}: ${(d.data.probability * 100).toFixed(2)}%</div><div>${i18n[currentLang].energy}: ${d.data.energy.toFixed(2)} kcal/mol</div>`);
+                    updateSuboptPreview(d.data);
+                })
+                .on('mousemove', e => { const r = container.getBoundingClientRect(); tooltip.style('left', (e.clientX - r.left + 10) + 'px').style('top', (e.clientY - r.top - 5) + 'px'); })
+                .on('mouseout', function() { d3.select(this).transition().duration(150).attr('d', arc); tooltip.style('visibility', 'hidden'); })
+                .on('click', (e, d) => showSuboptDetail(d.data));
+
+            g.selectAll('.arc-label').data(pie(pieData)).enter().append('text').attr('transform', d => `translate(${arc.centroid(d)})`).attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', d => d.data.displayProb > 0.05 ? '11px' : '8px').attr('font-weight', 'bold').attr('fill', '#000').text(d => d.data.displayProb > 0.03 ? `${(d.data.displayProb * 100).toFixed(0)}%` : '');
+
+            function updateSuboptPreview(data) {
+                previewDiv.html(`<div style="margin-bottom: 8px;"><span style="color:${data.color};font-weight:bold">${i18n[currentLang].structName} #${data.index}</span> <span style="color:var(--text-secondary);font-size:10px;">${(data.probability * 100).toFixed(2)}%</span></div><div style="font-size:9px;color:var(--text-secondary);word-break:break-all;margin-bottom:6px;">${currentLang === 'zh' ? '结构' : 'Struct'}: ${data.structure}</div><div id="preview-struct" style="width:100%;height:180px;background:var(--bg-canvas);border-radius:4px;"></div>`);
+                drawPreviewStructure(data.sequence, data.structure);
+            }
+        }
+
+        function showSuboptDetail(data) {
+            const detail = document.getElementById('complex-detail-view');
+            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${i18n[currentLang].structName} #${data.index}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.structure}</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].probability}</span><span class="result-value" style="color: var(--accent-green);">${(data.probability * 100).toFixed(4)}%</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].energy}</span><span class="result-value" style="color: var(--accent-green);">${data.energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="0.5" max="2" step="0.1" value="1" onchange="updateDetailTension(this.value)"><span id="detail-tension-val">1.0</span></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="1" max="6" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><span id="detail-linewidth-val">3</span></div></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
+
+            const s = data.sequence, st = data.structure;
+            // 为次优结构创建一个简化的配对矩阵（基于结构字符串）
+            const matrix = Array(s.length).fill(null).map(() => Array(s.length).fill(0));
+            const stack = [];
+            for (let i = 0; i < st.length; i++) { 
+                if (st[i] === '(') stack.push(i); 
+                else if (st[i] === ')') { const j = stack.pop(); matrix[i][j] = matrix[j][i] = 1; } 
+            }
+            currentDetailStructureData = { sequence: s, structure: st, pairsMatrix: matrix };
+            
+            requestAnimationFrame(() => {
+                const canvasEl = document.getElementById('detail-canvas');
+                const parentWidth = canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800;
+                const canvasWidth = canvasEl.clientWidth || parentWidth;
+                drawStructureForce(s, st, matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            });
+        }
+
+        function displayDesignResult(data) {
+            const content = document.getElementById('result-content');
+            let resultsHtml = data.results.map((r, i) => `
+                <div class="result-card" style="${i === 0 ? 'border: 2px solid var(--accent-green);' : ''}">
+                    <h4 style="color: ${i === 0 ? 'var(--accent-green)' : 'var(--accent-blue)'};">
+                        ${i === 0 ? i18n[currentLang].bestDesign : `Design #${r.trial}`}
+                        <span style="font-size: 0.8em; color: var(--text-secondary); margin-left: 10px;">${currentLang === 'zh' ? '缺陷值' : 'Defect'}: ${r.ensemble_defect.toFixed(4)}</span>
+                    </h4>
+                    <h5 style="color: var(--text-secondary); margin: 10px 0 8px;">${i18n[currentLang].domainSeq}</h5>
+                    <div class="result-row"><span class="result-value" style="font-family: 'Courier New', monospace;">${Object.entries(r.domains).map(([name, seq]) => `${name}: ${seq}`).join('<br>')}</span></div>
+                    <h5 style="color: var(--text-secondary); margin: 10px 0 8px;">${i18n[currentLang].strandSeq}</h5>
+                    ${Object.entries(r.strands).map(([name, seq]) => `<div class="result-row"><span class="result-label">${name}</span><span class="result-value" style="color: var(--accent-green);">${seq}</span></div>`).join('')}
+                    ${i === 0 ? `<button class="action-btn" style="margin-top: 10px;" onclick="analyzeDesignResult(${r.trial})">${i18n[currentLang].analyzeDesign}</button>` : ''}
+                </div>`).join('');
+
+            content.innerHTML = `
+                <div class="design-tabs">
+                    <button class="design-tab" onclick="showDesignResults()">🧬 ${i18n[currentLang].viewDesign}</button>
+                </div>
+                <div class="result-card">
+                    <h4>🎨 ${currentLang === 'zh' ? '设计完成' : 'Design Complete'}</h4>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '尝试次数' : 'Trials'}</span><span class="result-value">${data.total_trials}</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '有效设计' : 'Valid Designs'}</span><span class="result-value">${data.results.length}</span></div>
+                </div>
+                <h4 style="color: var(--accent-blue); margin: 15px 0 10px;">${currentLang === 'zh' ? '设计结果' : 'Design Results'}</h4>
+                ${resultsHtml}`;
+            analysisResult = data;
+        }
+
+        function showDesignResults() {
+            if (designResult) displayDesignResult(designResult);
+        }
+
+        function analyzeDesignResult(trialIndex) {
+            const result = designResult.results.find(r => r.trial === trialIndex);
+            if (!result) return;
+            switchMode('tube');
+            const list = document.getElementById('strand-list');
+            list.innerHTML = '';
+            Object.entries(result.strands).forEach(([name, seq]) => {
+                const item = document.createElement('div');
+                item.className = 'strand-item';
+                item.innerHTML = `
+                    <input type="text" placeholder="Name" value="${name}" class="strand-name">
+                    <input type="text" placeholder="Sequence" value="${seq}" class="strand-seq">
+                    <input type="number" placeholder="Conc (M)" value="1e-6" class="strand-conc">
+                    <button class="remove-btn" onclick="removeStrand(this)">×</button>`;
+                list.appendChild(item);
+            });
+            alert(currentLang === 'zh' ? '已将设计结果填入多链分析模式，点击"开始分析"查看结构' : 'Design results filled in. Click "Start Analysis" to view structure.');
+        }
+
+        // ==================== 结构绘制（简化版）====================
+        function drawStructureForce(sequence, structure, pairsMatrix, customContainer, customWidth, customHeight, infoPanelId) {
+            const container = customContainer || document.getElementById('structure-canvas');
+            if (!container) return;
+            const width = customWidth || container.clientWidth || 700, height = customHeight || 500;
+            container.innerHTML = '';
+            const n = sequence.length;
+            if (n === 0) return;
+
+            const maxPairProbs = [];
+            for (let i = 0; i < n; i++) {
+                let maxProb = 0;
+                for (let j = 0; j < n; j++) {
+                    if (i !== j && pairsMatrix[i][j] > maxProb) maxProb = pairsMatrix[i][j];
+                }
+                maxPairProbs.push(maxProb);
+            }
+
+            const probColorScale = getProbColorScale();
+            const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
+
+            const pairs = [], stack = [];
+            for (let i = 0; i < structure.length; i++) {
+                if (structure[i] === '(') stack.push(i);
+                else if (structure[i] === ')') pairs.push([stack.pop(), i]);
+            }
+
+            const nodes = sequence.split('').map((base, i) => ({ id: i, base, paired: structure[i] !== '.', maxProb: maxPairProbs[i] }));
+            const links = [];
+            for (let i = 0; i < n - 1; i++) links.push({ source: i, target: i + 1, type: 'backbone', distance: 25 / vizParams.tension });
+            pairs.forEach(([i, j]) => links.push({ source: i, target: j, type: 'pair', distance: 15 / vizParams.tension }));
+
+            const mainDiv = d3.select(container).style('display', 'flex');
+            const svg = mainDiv.append('svg').attr('width', width - 100).attr('height', height);
+            const legendDiv = mainDiv.append('div').style('width', '90px').style('padding', '10px').style('background', 'var(--bg-card)');
+
+            const legendSvg = legendDiv.append('svg').attr('width', 80).attr('height', 150);
+            const defs = legendSvg.append('defs');
+            const gradient = defs.append('linearGradient').attr('id', 'grad').attr('x1', '0%').attr('y1', '100%').attr('x2', '0%').attr('y2', '0%');
+            gradient.selectAll('stop').data([0, 0.5, 1]).enter().append('stop').attr('offset', d => `${d * 100}%`).attr('stop-color', d => d3.interpolate(gradientColors.low, gradientColors.high)(d));
+            legendSvg.append('rect').attr('x', 10).attr('y', 15).attr('width', 20).attr('height', 100).style('fill', 'url(#grad)').style('stroke', 'var(--border-color)');
+            [1, 0.5, 0].forEach((v, i) => legendSvg.append('text').attr('x', 38).attr('y', 22 + i * 50).attr('fill', 'var(--text-secondary)').attr('font-size', '10px').text(v));
+            legendDiv.append('div').style('color', 'var(--text-secondary)').style('font-size', '10px').style('text-align', 'center').text(currentLang === 'zh' ? '配对概率' : 'Pair Prob');
+
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance).strength(d => d.type === 'pair' ? 0.8 : 0.5))
+                .force('charge', d3.forceManyBody().strength(-100 / vizParams.tension))
+                .force('center', d3.forceCenter((width - 100) / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(12));
+
+            const isDark = currentTheme === 'dark';
+            const link = svg.append('g').selectAll('line').data(links).enter().append('line')
+                .attr('stroke', d => d.type === 'pair' ? (isDark ? '#00d9ff' : '#0066cc') : (isDark ? '#fff' : '#333'))
+                .attr('stroke-width', d => d.type === 'pair' ? vizParams.pairWidth : vizParams.backboneWidth).attr('opacity', d => d.type === 'pair' ? 0.8 : 0.6);
+
+            const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').attr('cursor', 'pointer')
+                .call(d3.drag().on('start', e => { if (!e.active) simulation.alphaTarget(0.3).restart(); e.subject.fx = e.subject.x; e.subject.fy = e.subject.y; })
+                    .on('drag', e => { e.subject.fx = e.x; e.subject.fy = e.y; })
+                    .on('end', e => { if (!e.active) simulation.alphaTarget(0); e.subject.fx = null; e.subject.fy = null; }));
+
+            node.append('circle').attr('r', 12).attr('fill', d => probColorScale(d.maxProb)).attr('stroke', d => baseColors[d.base] || '#888').attr('stroke-width', 2);
+            node.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '10px').attr('font-weight', 'bold').attr('fill', '#000').text(d => d.base);
+
+            // 点击碱基显示配对概率详情
+            node.on('click', (event, d) => {
+                event.stopPropagation();
+                showBaseInfo(d.id, d.base, sequence, pairsMatrix, structure, infoPanelId);
+            });
+
+            simulation.on('tick', () => {
+                link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+                node.attr('transform', d => `translate(${d.x}, ${d.y})`);
+            });
+
+            container.simulation = simulation;
+        }
+
+        // 显示碱基配对概率详情
+        function showBaseInfo(index, base, sequence, pairsMatrix, structure, panelId) {
+            const probs = [];
+            for (let j = 0; j < sequence.length; j++) {
+                if (j !== index && pairsMatrix[index][j] > 0.01) {
+                    probs.push({ pos: j, base: sequence[j], prob: pairsMatrix[index][j] });
+                }
+            }
+            probs.sort((a, b) => b.prob - a.prob);
+
+            let infoHtml = `<div class="result-card" style="margin-top: 10px; border: 2px solid var(--accent-green);">
+                <h4 style="color: var(--accent-green);">📍 ${currentLang === 'zh' ? '碱基信息' : 'Base Info'}</h4>
+                <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '位置' : 'Position'}</span><span class="result-value">${index + 1}</span></div>
+                <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '碱基' : 'Base'}</span><span class="result-value">${base}</span></div>
+                <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '状态' : 'Status'}</span><span class="result-value">${structure[index] === '.' ? (currentLang === 'zh' ? '未配对' : 'Unpaired') : (currentLang === 'zh' ? '已配对' : 'Paired')}</span></div>
+                <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '最大配对概率' : 'Max Pair Prob'}</span><span class="result-value">${(Math.max(...pairsMatrix[index]) * 100).toFixed(1)}%</span></div>`;
+            
+            if (probs.length > 0) {
+                infoHtml += `<h5 style="margin-top: 10px; color: var(--text-secondary);">${currentLang === 'zh' ? '配对概率列表' : 'Pair Probabilities'}</h5>
+                    <div style="max-height: 150px; overflow-y: auto;">`;
+                probs.slice(0, 10).forEach(p => {
+                    infoHtml += `<div class="result-row" style="font-size: 11px;">
+                        <span class="result-label">${currentLang === 'zh' ? '位置' : 'Pos'} ${p.pos + 1} (${p.base})</span>
+                        <span class="result-value" style="color: var(--accent-blue);">${(p.prob * 100).toFixed(2)}%</span>
+                    </div>`;
+                });
+                infoHtml += `</div>`;
+            }
+            infoHtml += `</div>`;
+
+            const targetPanelId = panelId || 'base-info-panel';
+            const infoDiv = document.getElementById(targetPanelId);
+            if (infoDiv) infoDiv.innerHTML = infoHtml;
+        }
+
+        function fixLayout() {
+            if (!currentStructureData) return;
+            const container = document.getElementById('structure-canvas');
+            if (!container) return;
+            container.simulation && container.simulation.stop();
+            const canvasWidth = container.clientWidth || 700;
+            drawFixedLayout(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, container, null, 'base-info-panel', canvasWidth);
+        }
+
+        function drawFixedLayout(sequence, structure, pairsMatrix, container, customHeight, infoPanelId, customWidth) {
+            const width = customWidth || container.clientWidth || 700, height = customHeight || 500;
+            container.innerHTML = '';
+            const n = sequence.length;
+            const radius = Math.min(width - 150, height) / 2 - 40;
+            const centerX = (width - 100) / 2, centerY = height / 2;
+
+            const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
+            const probColorScale = getProbColorScale();
+            const maxPairProbs = [];
+            for (let i = 0; i < n; i++) { let maxP = 0; for (let j = 0; j < n; j++) if (i !== j && pairsMatrix[i][j] > maxP) maxP = pairsMatrix[i][j]; maxPairProbs.push(maxP); }
+
+            const pairs = [], stack = [];
+            for (let i = 0; i < structure.length; i++) { if (structure[i] === '(') stack.push(i); else if (structure[i] === ')') pairs.push([stack.pop(), i]); }
+
+            const nodes = sequence.split('').map((base, i) => {
+                const angle = (2 * Math.PI * i / n) - Math.PI / 2;
+                return { id: i, base, x: centerX + radius * Math.cos(angle), y: centerY + radius * Math.sin(angle), maxProb: maxPairProbs[i], paired: structure[i] !== '.' };
+            });
+
+            const mainDiv = d3.select(container).style('display', 'flex');
+            const svg = mainDiv.append('svg').attr('width', width - 100).attr('height', height);
+            const isDark = currentTheme === 'dark';
+
+            for (let i = 0; i < n - 1; i++) svg.append('line').attr('x1', nodes[i].x).attr('y1', nodes[i].y).attr('x2', nodes[i + 1].x).attr('y2', nodes[i + 1].y).attr('stroke', isDark ? '#fff' : '#333').attr('stroke-width', vizParams.backboneWidth).attr('opacity', 0.6);
+            pairs.forEach(([i, j]) => svg.append('line').attr('x1', nodes[i].x).attr('y1', nodes[i].y).attr('x2', nodes[j].x).attr('y2', nodes[j].y).attr('stroke', isDark ? '#00d9ff' : '#0066cc').attr('stroke-width', vizParams.pairWidth).attr('opacity', 0.8));
+
+            const nodeGroup = svg.selectAll('g.node').data(nodes).enter().append('g').attr('transform', d => `translate(${d.x}, ${d.y})`).attr('cursor', 'pointer');
+            nodeGroup.append('circle').attr('r', 12).attr('fill', d => probColorScale(d.maxProb)).attr('stroke', d => baseColors[d.base]).attr('stroke-width', 2);
+            nodeGroup.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '10px').attr('font-weight', 'bold').attr('fill', '#000').text(d => d.base);
+            
+            // 点击碱基显示配对概率详情
+            nodeGroup.on('click', (event, d) => {
+                event.stopPropagation();
+                showBaseInfo(d.id, d.base, sequence, pairsMatrix, structure, infoPanelId);
+            });
+
+            const legendDiv = mainDiv.append('div').style('width', '90px').style('padding', '10px').style('background', 'var(--bg-card)');
+            legendDiv.html(`<div style="color: var(--text-secondary); font-size: 10px; text-align: center;">✓ ${currentLang === 'zh' ? '固定布局' : 'Fixed'}</div>`);
+        }
+
+        function updateTension(v) { vizParams.tension = parseFloat(v); document.getElementById('tension-value').textContent = v; if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix); }
+        function updateLineWidth(v) { vizParams.backboneWidth = parseFloat(v); vizParams.pairWidth = parseFloat(v) + 1; document.getElementById('linewidth-value').textContent = v; if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix); }
+
+        // ==================== 饼图 ====================
+        function drawPieChart(complexes, totalConc) {
+            const container = document.getElementById('pie-canvas');
+            if (!container) return;
+            const width = 300, height = 300, radius = Math.min(width, height) / 2 - 15;
+            container.innerHTML = '';
+
+            const svg = d3.select('#pie-canvas').append('svg').attr('width', width).attr('height', height);
+            const g = svg.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+            const colors = ['#00d9ff', '#00ff88', '#ff6b6b', '#ffe66d', '#a855f7', '#f97316'];
+            const pieData = complexes.slice(0, 6).map((c, i) => ({ ...c, color: colors[i], percentage: (c.concentration / totalConc * 100) }));
+
+            const pie = d3.pie().value(d => d.concentration).sort(null);
+            const arc = d3.arc().innerRadius(0).outerRadius(radius);
+            const arcHover = d3.arc().innerRadius(0).outerRadius(radius + 10);
+
+            const tooltip = d3.select('#pie-canvas').append('div').style('position', 'absolute').style('visibility', 'hidden').style('background', 'rgba(0,0,0,0.9)').style('border', '1px solid var(--accent-blue)').style('border-radius', '6px').style('padding', '8px').style('font-size', '11px').style('color', '#fff');
+
+            const previewDiv = d3.select('#pie-legend').append('div').style('background', 'var(--bg-primary)').style('border-radius', '6px').style('padding', '10px').style('min-height', '150px');
+            previewDiv.html(`<div style="color: var(--text-secondary); text-align: center; padding: 15px;">${currentLang === 'zh' ? '悬停查看预览' : 'Hover to preview'}</div>`);
+
+            g.selectAll('.arc').data(pie(pieData)).enter().append('path').attr('d', arc).attr('fill', d => d.data.color).attr('stroke', 'var(--bg-primary)').attr('stroke-width', 2).style('cursor', 'pointer')
+                .on('mouseover', function(e, d) {
+                    d3.select(this).transition().duration(150).attr('d', arcHover);
+                    tooltip.style('visibility', 'visible').html(`<div style="color:${d.data.color};font-weight:bold">${d.data.name}</div><div>${(d.data.concentration * 1e9).toFixed(2)} nM (${d.data.percentage.toFixed(1)}%)</div><div>ΔG: ${d.data.mfe_energy.toFixed(2)} kcal/mol</div>`);
+                    updatePreview(d.data);
+                })
+                .on('mousemove', e => { const r = container.getBoundingClientRect(); tooltip.style('left', (e.clientX - r.left + 10) + 'px').style('top', (e.clientY - r.top - 5) + 'px'); })
+                .on('mouseout', function() { d3.select(this).transition().duration(150).attr('d', arc); tooltip.style('visibility', 'hidden'); })
+                .on('click', (e, d) => showComplexDetail(d.data));
+
+            g.selectAll('.arc-label').data(pie(pieData)).enter().append('text').attr('transform', d => `translate(${arc.centroid(d)})`).attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', d => d.data.percentage > 5 ? '11px' : '8px').attr('font-weight', 'bold').attr('fill', '#000').text(d => d.data.percentage > 3 ? `${d.data.percentage.toFixed(0)}%` : '');
+
+            function updatePreview(data) {
+                previewDiv.html(`<div style="margin-bottom: 8px;"><span style="color:${data.color};font-weight:bold">${data.name}</span> <span style="color:var(--text-secondary);font-size:10px;">${(data.concentration * 1e9).toFixed(2)} nM</span></div><div style="font-size:9px;color:var(--text-secondary);word-break:break-all;margin-bottom:6px;">${currentLang === 'zh' ? '序列' : 'Seq'}: ${data.sequence}</div><div id="preview-struct" style="width:100%;height:180px;background:var(--bg-canvas);border-radius:4px;"></div>`);
+                drawPreviewStructure(data.sequence, data.mfe_structure);
+            }
+        }
+
+        function drawPreviewStructure(seq, struct) {
+            const container = document.getElementById('preview-struct');
+            if (!container) return;
+            const width = container.clientWidth || 200, height = 180;
+            container.innerHTML = '';
+            const n = seq.length;
+            if (n === 0) return;
+
+            const r = n > 20 ? 5 : 7;
+            const pairs = [], stack = [];
+            for (let i = 0; i < struct.length; i++) { if (struct[i] === '(') stack.push(i); else if (struct[i] === ')') pairs.push([stack.pop(), i]); }
+
+            const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
+            const nodes = seq.split('').map((base, i) => ({ id: i, base, paired: struct[i] !== '.' }));
+            const links = [];
+            for (let i = 0; i < n - 1; i++) links.push({ source: i, target: i + 1, type: 'backbone', distance: r * 1.8 });
+            pairs.forEach(([i, j]) => links.push({ source: i, target: j, type: 'pair', distance: r * 1.2 }));
+
+            const svg = d3.select('#preview-struct').append('svg').attr('width', width).attr('height', height);
+            const simulation = d3.forceSimulation(nodes).force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance).strength(d => d.type === 'pair' ? 0.8 : 0.5)).force('charge', d3.forceManyBody().strength(-40)).force('center', d3.forceCenter(width / 2, height / 2)).force('collision', d3.forceCollide().radius(r + 2));
+
+            const link = svg.append('g').selectAll('line').data(links).enter().append('line').attr('stroke', d => d.type === 'pair' ? '#00d9ff' : '#666').attr('stroke-width', d => d.type === 'pair' ? 2 : 1);
+            const node = svg.append('g').selectAll('g').data(nodes).enter().append('g');
+            node.append('circle').attr('r', r).attr('fill', d => d.paired ? '#00d9ff' : '#444466').attr('stroke', d => baseColors[d.base]).attr('stroke-width', 1.5);
+            if (n <= 15) node.append('text').attr('text-anchor', 'middle').attr('dy', '0.3em').attr('font-size', '6px').attr('fill', '#000').attr('font-weight', 'bold').text(d => d.base);
+            simulation.on('tick', () => { link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y); node.attr('transform', d => `translate(${d.x},${d.y})`); });
+        }
+
+        function showComplexDetail(data) {
+            const detail = document.getElementById('complex-detail-view');
+            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${data.name}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.mfe_structure}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '浓度' : 'Conc'}</span><span class="result-value" style="color: var(--accent-green);">${(data.concentration * 1e9).toFixed(4)} nM</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量' : 'Energy'}</span><span class="result-value" style="color: var(--accent-green);">${data.mfe_energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="0.5" max="2" step="0.1" value="1" onchange="updateDetailTension(this.value)"><span id="detail-tension-val">1.0</span></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="1" max="6" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><span id="detail-linewidth-val">3</span></div></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
+
+            const s = data.sequence.replace(/\+/g, ''), st = data.mfe_structure.replace(/\+/g, '');
+            const matrix = Array(s.length).fill(null).map(() => Array(s.length).fill(0));
+            const stack = [];
+            for (let i = 0; i < st.length; i++) { if (st[i] === '(') stack.push(i); else if (st[i] === ')') { const j = stack.pop(); matrix[i][j] = matrix[j][i] = 1; } }
+            currentDetailStructureData = { sequence: s, structure: st, pairsMatrix: matrix };
+            
+            // 使用 requestAnimationFrame 确保容器已渲染
+            requestAnimationFrame(() => {
+                const canvasEl = document.getElementById('detail-canvas');
+                const parentWidth = canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800;
+                const canvasWidth = canvasEl.clientWidth || parentWidth;
+                drawStructureForce(s, st, matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            });
+        }
+
+        function fixDetailLayout() {
+            if (!currentDetailStructureData) return;
+            const c = document.getElementById('detail-canvas');
+            if (!c) return;
+            c.simulation && c.simulation.stop();
+            const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+            drawFixedLayout(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, 450, 'detail-base-info-panel', canvasWidth);
+        }
+
+        function updateDetailTension(v) {
+            vizParams.tension = parseFloat(v);
+            document.getElementById('detail-tension-val').textContent = v;
+            if (currentDetailStructureData) {
+                const canvasEl = document.getElementById('detail-canvas');
+                const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+
+        function updateDetailLineWidth(v) {
+            vizParams.backboneWidth = parseFloat(v);
+            vizParams.pairWidth = parseFloat(v) + 1;
+            document.getElementById('detail-linewidth-val').textContent = v;
+            if (currentDetailStructureData) {
+                const canvasEl = document.getElementById('detail-canvas');
+                const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+
+        function closeComplexDetail() { document.getElementById('complex-detail-view').innerHTML = ''; }
+
+        // ==================== 导出和Jupyter ====================
+        function showExportModal() { document.getElementById('export-modal').classList.add('active'); }
+        function closeExportModal() { document.getElementById('export-modal').classList.remove('active'); }
+
+        function exportImage() {
+            const svg = document.querySelector('#structure-canvas svg');
+            if (!svg) { alert(currentLang === 'zh' ? '没有可导出的结构图' : 'No structure to export'); return; }
+            const data = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), img = new Image();
+            img.onload = function() {
+                canvas.width = img.width * 2; canvas.height = img.height * 2;
+                ctx.fillStyle = currentTheme === 'dark' ? '#151525' : '#fafafa'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const link = document.createElement('a'); link.download = `nupack_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+            };
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
+            closeExportModal();
+        }
+
+        function exportJSON() {
+            if (!analysisResult) { alert(currentLang === 'zh' ? '请先进行分析' : 'Run analysis first'); return; }
+            const blob = new Blob([JSON.stringify(analysisResult, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a'); link.download = `nupack_${Date.now()}.json`; link.href = URL.createObjectURL(blob); link.click();
+            closeExportModal();
+        }
+
+        function exportCSV() {
+            if (!analysisResult || !analysisResult.pairs_matrix) { alert(currentLang === 'zh' ? '请先进行单链分析' : 'Run single-strand analysis first'); return; }
+            let csv = ',' + analysisResult.sequence.split('').join(',') + '\n';
+            analysisResult.pairs_matrix.forEach((row, i) => { csv += analysisResult.sequence[i] + ',' + row.map(v => v.toFixed(4)).join(',') + '\n'; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a'); link.download = `pairs_${Date.now()}.csv`; link.href = URL.createObjectURL(blob); link.click();
+            closeExportModal();
+        }
+
+        function exportAll() { exportJSON(); setTimeout(() => exportImage(), 300); setTimeout(() => { if (analysisResult && analysisResult.pairs_matrix) exportCSV(); closeExportModal(); }, 600); }
+
+        function toggleFullscreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+            if (!overlay) return;
+            overlay.classList.toggle('active');
+            if (overlay.classList.contains('active') && currentStructureData) {
+                const c = overlay.querySelector('#fullscreen-canvas');
+                if (c) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, c, window.innerWidth, window.innerHeight - 60);
+            }
+        }
+
+        async function openInJupyter() {
+            if (!analysisResult) { alert(currentLang === 'zh' ? '请先进行分析' : 'Run analysis first'); return; }
+            try {
+                const saveRes = await fetch('/api/project/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: `nupack_${Date.now()}`, results: analysisResult, material: document.getElementById('material').value, temperature: parseFloat(document.getElementById('temperature').value), sodium: parseFloat(document.getElementById('sodium').value), magnesium: parseFloat(document.getElementById('magnesium').value) }) });
+                const saveData = await saveRes.json();
+                if (saveData.error) throw new Error(saveData.error);
+                const jupyterRes = await fetch('/api/jupyter/open', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ project_dir: saveData.project_dir }) });
+                const jupyterData = await jupyterRes.json();
+                if (jupyterData.error) throw new Error(jupyterData.error);
+                alert(currentLang === 'zh' ? `✅ Jupyter Lab 已启动！\n请打开: ${jupyterData.url}\n项目目录: ${saveData.project_dir}` : `✅ Jupyter Lab started!\nOpen: ${jupyterData.url}\nProject: ${saveData.project_dir}`);
+            } catch (e) { alert(currentLang === 'zh' ? '启动失败: ' : 'Failed: ' + e.message); }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLanguage();
+            
+            // 初始化颜色设置
+            document.getElementById('color-low').addEventListener('input', onColorChange);
+            document.getElementById('color-high').addEventListener('input', onColorChange);
+            updateGradientPreview();
+        });
+    </script>
+
+    <!-- 全屏覆盖层 -->
+    <div class="modal-overlay" id="fullscreen-overlay" style="background: var(--bg-canvas);">
+        <div style="position: absolute; top: 0; left: 0; right: 0; padding: 10px 15px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color: var(--accent-blue);">🧬 NUPACK</h3>
+            <button class="action-btn" onclick="toggleFullscreen()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button>
+        </div>
+        <div style="position: absolute; top: 50px; left: 0; right: 0; bottom: 0;">
+            <div id="fullscreen-canvas"></div>
+        </div>
+    </div>
+</body>
+</html>
