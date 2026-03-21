@@ -35,13 +35,17 @@
 
 ## 🚀 快速安装
 
+> ⚠️ **警告**：以下快速安装方法会直接向系统 Python 环境安装包，**可能会影响系统原有的 Python 环境**。
+> 
+> 如果你是有经验的开发者，或系统中已有其他 Python 项目，**强烈建议使用虚拟环境安装**（见下方"专业安装"）。
+
 ### 1. 安装 NUPACK
 
 首先需要在 NUPACK 官网注册并获取许可证：https://www.nupack.org/
 
 ```bash
 # 安装 NUPACK
-pip install nupack
+pip install nupack --break-system-packages
 
 # 激活许可证（替换为你的许可证密钥）
 nupack-license --user "your_email@example.com" --key "your_license_key"
@@ -74,6 +78,32 @@ cd nupack-webapp
 
 ```bash
 git clone https://github.com/Luminave/nupack-webapp.git && cd nupack-webapp && ./install.sh && ./start.sh
+```
+
+---
+
+## 🔬 专业安装（使用虚拟环境）
+
+如果你是有经验的开发者，建议使用 Python 虚拟环境，避免影响系统环境：
+
+```bash
+# 克隆仓库
+git clone https://github.com/Luminave/nupack-webapp.git
+cd nupack-webapp
+
+# 创建虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装 NUPACK（首次安装）
+pip install nupack
+nupack-license --user "your_email@example.com" --key "your_license_key"
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动
+python3 app.py
 ```
 
 ---

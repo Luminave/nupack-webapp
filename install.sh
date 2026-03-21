@@ -22,7 +22,7 @@ else
     echo ""
     echo "请先安装 NUPACK:"
     echo "    1. 访问 https://www.nupack.org/ 注册账号并获取许可证"
-    echo "    2. 运行: pip install nupack"
+    echo "    2. 运行: pip install nupack --break-system-packages"
     echo "    3. 激活许可证: nupack-license --user 'your_email' --key 'your_key'"
     echo ""
     exit 1
@@ -31,7 +31,7 @@ fi
 # 安装 Python 依赖
 echo ""
 echo ">>> 安装 Python 依赖..."
-pip install -r requirements.txt -q
+pip install -r requirements.txt --break-system-packages -q
 echo "    ✅ 依赖安装完成"
 
 # 创建项目目录
