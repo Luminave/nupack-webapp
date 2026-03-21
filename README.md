@@ -2,8 +2,6 @@
 
 一个基于 Flask + NUPACK 的本地化核酸分析网页界面，提供直观的可视化操作体验。
 
-![Screenshot](https://via.placeholder.com/800x400?text=NUPACK+Web+Screenshot)
-
 ## ✨ 功能特性
 
 ### 🔬 单链分析
@@ -35,7 +33,7 @@
 - Python 3.8+
 - NUPACK 4.0+ (需要有效的许可证)
 
-## 🚀 安装步骤
+## 🚀 快速安装
 
 ### 1. 安装 NUPACK
 
@@ -43,7 +41,7 @@
 
 ```bash
 # 安装 NUPACK
-pip install -U nupack
+pip install nupack
 
 # 激活许可证（替换为你的许可证密钥）
 nupack-license --user "your_email@example.com" --key "your_license_key"
@@ -52,26 +50,33 @@ nupack-license --user "your_email@example.com" --key "your_license_key"
 ### 2. 安装 NUPACK Web
 
 ```bash
-# 下载或克隆项目
-git clone https://github.com/your-username/nupack-webapp.git
+# 克隆仓库
+git clone https://github.com/Luminave/nupack-webapp.git
+
+# 进入目录
 cd nupack-webapp
 
-# 创建虚拟环境（推荐）
-python3 -m venv venv
-source venv/bin/activate  # Linux/macOS
-# 或 venv\Scripts\activate  # Windows
-
-# 安装依赖
-pip install -r requirements.txt
+# 运行安装脚本
+./install.sh
 ```
 
-### 3. 运行应用
+### 3. 启动应用
 
 ```bash
-python app.py
+./start.sh
 ```
 
 然后在浏览器中打开：http://127.0.0.1:5000
+
+---
+
+### 一键安装（复制粘贴）
+
+```bash
+git clone https://github.com/Luminave/nupack-webapp.git && cd nupack-webapp && ./install.sh && ./start.sh
+```
+
+---
 
 ## 📖 使用示例
 
@@ -97,14 +102,6 @@ python app.py
 ```
 设计两条互补的 10nt 链。
 
-## ⌨️ 快捷操作
-
-| 点击区域 | 功能 |
-|---------|------|
-| 🧬 | 显示彩蛋 |
-| NUPACK | 跳转 NUPACK 官网 |
-| Web | 跳转作者主页 |
-
 ## 🔧 配置说明
 
 应用默认运行在 `127.0.0.1:5000`，如需修改：
@@ -120,11 +117,27 @@ app.run(host='0.0.0.0', port=8080, debug=False)
 nupack-webapp/
 ├── app.py              # Flask 主应用
 ├── requirements.txt    # Python 依赖
-├── start.sh           # 启动脚本
-├── templates/
-│   └── index.html     # 主页面模板
-└── static/            # 静态资源（如有）
+├── install.sh          # 安装脚本
+├── start.sh            # 启动脚本
+├── README.md           # 说明文档
+├── LICENSE             # 许可证
+└── templates/
+    └── index.html      # 主页面模板
 ```
+
+## ❓ 常见问题
+
+**Q: 提示 `ModuleNotFoundError: No module named 'nupack'`**
+> A: NUPACK 未安装或未激活许可证，请先完成 NUPACK 安装
+
+**Q: 提示 `ModuleNotFoundError: No module named 'flask'`**
+> A: 运行 `pip install flask` 或重新运行 `./install.sh`
+
+**Q: 端口 5000 被占用**
+> A: 修改 `app.py` 最后一行的 `port=5000` 为其他端口
+
+**Q: 安装脚本执行无权限**
+> A: 运行 `chmod +x install.sh start.sh` 添加执行权限
 
 ## 🙏 致谢
 
@@ -139,4 +152,4 @@ nupack-webapp/
 ---
 
 **Author**: Victor.Guo  
-**Powered by**: OpenClaw
+**GitHub**: https://github.com/Luminave/nupack-webapp
