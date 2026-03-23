@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NUPACK Web</title>
+    <title>NUPACK Web v1.3.0</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root {
@@ -540,16 +540,22 @@
                 <span class="dna-emoji" onclick="showMambaModal()" title="点击查看彩蛋">🧬</span>
                 <span onclick="window.open('https://nupack.org/', '_blank')" title="访问 NUPACK 官网">NUPACK</span>
                 <span onclick="window.open('https://space.bilibili.com/533586737', '_blank')" title="访问作者主页">Web</span>
+                <span style="font-size: 0.5em; color: var(--accent-green); margin-left: 5px;">v1.3.0</span>
             </h1>
             <div class="header-right">
                 <a href="https://docs.nupack.org/" target="_blank" class="header-btn">📖 <span data-i18n="docs">文档</span></a>
                 <button class="header-btn" onclick="toggleLanguage()" id="lang-btn">EN</button>
                 <button class="header-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
                 <button class="header-btn" onclick="openInJupyter()">📓 Jupyter</button>
+                <button class="header-btn" onclick="downloadProject()">💾 <span data-i18n="download">下载</span></button>
+                <a href="https://github.com/Luminave/nupack-webapp" target="_blank" class="header-btn">🐱 GitHub</a>
+                <a href="https://afdian.tv/a/sailfire" target="_blank" class="header-btn" id="donate-btn" title="">☕ <span data-i18n="donate">捐赠</span></a>
                 <button class="header-btn" onclick="showExportModal()">📦 <span data-i18n="export">导出</span></button>
             </div>
         </header>
-
+        <div id="warning-text" style="text-align: center; padding: 8px; background: rgba(255, 193, 7, 0.15); border-bottom: 1px solid rgba(255, 193, 7, 0.3); color: #ff9800; font-size: 0.85em;">
+            ⚠️ 项目持续开发中，可能存在功能缺陷，请勿将其作为核酸链设计的最终标准！
+        </div>
         <div class="main-layout">
             <div class="control-panel">
                 <div class="panel-section">
@@ -570,16 +576,20 @@
                     </select>
                     <div class="param-row">
                         <div>
-                            <label data-i18n="temp">温度 (°C)</label>
-                            <input type="number" id="temperature" value="37" min="0" max="100">
-                        </div>
-                        <div>
                             <label>[Na⁺] (M)</label>
                             <input type="number" id="sodium" value="1.0" min="0.05" max="1.1" step="0.01">
                         </div>
+                        <div>
+                            <label>[Mg²⁺] (M)</label>
+                            <input type="number" id="magnesium" value="0.0" min="0" max="0.2" step="0.001">
+                        </div>
                     </div>
-                    <label>[Mg²⁺] (M)</label>
-                    <input type="number" id="magnesium" value="0.0" min="0" max="0.2" step="0.001">
+                    <div class="param-row">
+                        <div>
+                            <label data-i18n="temp">温度 (°C)</label>
+                            <input type="number" id="temperature" value="37" min="0" max="100">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="panel-section">
@@ -613,7 +623,7 @@
                     <p style="font-size: 0.75em; color: var(--text-secondary); margin-top: -8px;">
                         <span data-i18n="dnaHint">DNA: A, C, G, T | RNA: A, C, G, U</span>
                     </p>
-                    
+
                     <h3 style="margin-top: 15px;" data-i18n="suboptSettings">次优结构分析</h3>
                     <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="suboptHint">
                         分析能量在 MFE 附近的多种可能结构
@@ -704,9 +714,6 @@
             <div class="result-panel">
                 <div class="result-header">
                     <h2 data-i18n="results">分析结果</h2>
-                    <div class="result-actions">
-                        <button class="action-btn" onclick="toggleFullscreen()" id="fullscreen-btn">⛶ <span data-i18n="fullscreen">全屏</span></button>
-                    </div>
                     <span class="status-badge ready" id="status" data-i18n="ready">就绪</span>
                 </div>
 
@@ -756,6 +763,8 @@
         const i18n = {
             zh: {
                 docs: '文档', export: '导出', mode: '分析模式', single: '单链分析', multi: '多链分析',
+                download: '下载', donate: '捐赠', donateHint: '如果这帮助到了你，可以给我捐赠一杯咖啡吗？',
+                warning: '⚠️ 项目持续开发中，可能存在功能缺陷，请勿将其作为核酸链设计的最终标准！',
                 design: '序列设计', params: '物理参数', material: '材料类型', temp: '温度 (°C)',
                 seqInput: '序列输入', sequence: '核酸序列', dnaHint: 'DNA: A, C, G, T | RNA: A, C, G, U',
                 strandList: '链列表', addStrand: '添加链', maxSize: '最大复合物大小',
@@ -778,6 +787,8 @@
             },
             en: {
                 docs: 'Docs', export: 'Export', mode: 'Mode', single: 'Single', multi: 'Multi-strand',
+                download: 'Download', donate: 'Donate', donateHint: 'If this helped you, would you like to buy me a coffee?',
+                warning: '⚠️ This project is under active development and may have bugs. Do not use it as the final standard for nucleic acid design!',
                 design: 'Design', params: 'Parameters', material: 'Material', temp: 'Temperature (°C)',
                 seqInput: 'Sequence Input', sequence: 'Nucleic Acid Sequence', dnaHint: 'DNA: A, C, G, T | RNA: A, C, G, U',
                 strandList: 'Strand List', addStrand: 'Add Strand', maxSize: 'Max Complex Size',
@@ -821,33 +832,47 @@
                     el.placeholder = i18n[currentLang][key];
                 }
             });
+            // 更新捐赠按钮的 title
+            const donateBtn = document.getElementById('donate-btn');
+            if (donateBtn) {
+                donateBtn.title = i18n[currentLang].donateHint;
+            }
+            // 更新警告提示
+            const warningEl = document.getElementById('warning-text');
+            if (warningEl) {
+                warningEl.textContent = i18n[currentLang].warning;
+            }
         }
 
         // ==================== 全局状态 ====================
         let currentMode = 'single';
-        let currentTheme = 'dark';
+        let currentTheme = 'light';
         let analysisResult = null;
         let tubeAnalysisData = null;
         let suboptAnalysisData = null; // 次优结构分析数据
         let designResult = null; // 保存设计结果
         let currentStructureData = null;
         let currentDetailStructureData = null;
-        let vizParams = { tension: 1.0, backboneWidth: 3, pairWidth: 4 };
-        
+        let vizParams = { tension: 1.0, backboneWidth: 3, pairWidth: 4, zoom: 1.0, autoLayout: false, compactLayout: false, multiChainMode: false, nodeRadius: 12, lockLayout: false, rotation: 0 };
+        let fullscreenZoom = 1;  // 全屏模式下的独立缩放
+        let fullscreenRotation = 0;  // 全屏模式下的独立旋转
+        // 默认链颜色（用户可自定义）
+        let chainColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8', '#a29bfe', '#6c5ce7', '#00b894'];
+
         // 配对概率颜色设置 - 默认使用更显眼的颜色
         let gradientColors = {
             low: '#1a1a2e',   // 深色（低概率）
             high: '#ff3366'   // 亮粉红色（高概率）
         };
-        
+
         // 预设的醒目颜色方案
         const colorPresets = {
-            default: { low: '#1a1a2e', high: '#ff3366' },      // 深色 → 亮粉红
-            fire: { low: '#1a1a2e', high: '#ff6600' },         // 深色 → 橙色
-            emerald: { low: '#1a1a2e', high: '#00ff88' },      // 深色 → 翠绿
-            electric: { low: '#1a1a2e', high: '#00d9ff' },     // 深色 → 电蓝
-            sunset: { low: '#2d1b4e', high: '#ff4757' },       // 深紫 → 红橙
-            neon: { low: '#0a0a0a', high: '#39ff14' }          // 黑色 → 霓虹绿
+            default: { low: '#ffffff', high: '#ff3366' },      // 白色 → 亮粉红
+            fire: { low: '#ffffff', high: '#ff6600' },         // 白色 → 橙色
+            emerald: { low: '#ffffff', high: '#00ff88' },      // 白色 → 翠绿
+            electric: { low: '#ffffff', high: '#00d9ff' },     // 白色 → 电蓝
+            sunset: { low: '#ffffff', high: '#ff4757' },       // 白色 → 红橙
+            neon: { low: '#ffffff', high: '#39ff14' }          // 白色 → 霓虹绿
         };
 
         // ==================== 颜色设置 ====================
@@ -857,32 +882,32 @@
                 preview.style.background = `linear-gradient(90deg, ${gradientColors.low}, ${gradientColors.high})`;
             }
         }
-        
+
         function onColorChange() {
             gradientColors.low = document.getElementById('color-low').value;
             gradientColors.high = document.getElementById('color-high').value;
             updateGradientPreview();
-            
+
             // 如果已有分析结果，重新绘制
             if (currentStructureData) {
                 drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
                 drawHeatmap(currentStructureData.sequence, currentStructureData.pairsMatrix);
             }
         }
-        
+
         function resetColors() {
             gradientColors = { ...colorPresets.default };
             document.getElementById('color-low').value = gradientColors.low;
             document.getElementById('color-high').value = gradientColors.high;
             updateGradientPreview();
-            
+
             // 如果已有分析结果，重新绘制
             if (currentStructureData) {
                 drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
                 drawHeatmap(currentStructureData.sequence, currentStructureData.pairsMatrix);
             }
         }
-        
+
         // 获取当前颜色比例尺
         function getProbColorScale() {
             return d3.scaleSequential()
@@ -999,7 +1024,7 @@
             const complexDiv = btn.closest('div[style*="background"]');
             const strandsInput = complexDiv.querySelector('.tcomplex-strands');
             const structureInput = complexDiv.querySelector('.tcomplex-structure');
-            
+
             const strandNames = strandsInput.value.split(',').map(s => s.trim()).filter(s => s);
             if (strandNames.length === 0) {
                 alert(currentLang === 'zh' ? '请输入链名称' : 'Please enter strand names');
@@ -1074,7 +1099,7 @@
             allDomains.forEach(d => {
                 const key = d.domainName;
                 const base = d.baseName;
-                
+
                 if (d.isComplement) {
                     // 反向互补域
                     if (baseNameUsed[base] === 'opened') {
@@ -1087,9 +1112,9 @@
                     // 正向域
                     if (baseNameUsed[base] === undefined || baseNameUsed[base] === null) {
                         // 检查后面是否有对应的反向互补域
-                        const hasComplement = allDomains.some(other => 
-                            other !== d && 
-                            other.baseName === base && 
+                        const hasComplement = allDomains.some(other =>
+                            other !== d &&
+                            other.baseName === base &&
                             other.isComplement
                         );
                         if (hasComplement) {
@@ -1157,7 +1182,7 @@
                 if (currentMode === 'single') {
                     const sequence = document.getElementById('sequence').value.trim();
                     if (!sequence) throw new Error(currentLang === 'zh' ? '请输入序列' : 'Please enter a sequence');
-                    
+
                     // 检查是否启用次优结构分析
                     const enableSubopt = document.getElementById('enable-subopt').checked;
                     if (enableSubopt) {
@@ -1259,8 +1284,13 @@
                     <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '💡 点击碱基查看配对概率详情' : '💡 Click a base to view pairing probabilities'}</p>
                     <div class="viz-controls">
                         <button class="action-btn" onclick="fixLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button>
-                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="tension-slider" min="0.5" max="2" step="0.1" value="1" onchange="updateTension(this.value)"><span id="tension-value">1.0</span></div>
-                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="linewidth-slider" min="1" max="6" step="0.5" value="3" onchange="updateLineWidth(this.value)"><span id="linewidth-value">3</span></div>
+                        <button class="action-btn" id="auto-layout-btn" onclick="toggleAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button>
+                        <button class="action-btn" id="compact-btn" onclick="toggleCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button>
+                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="tension-slider" min="-1" max="1" step="0.05" value="0" oninput="updateTensionFromSlider(this.value)"><input type="number" id="tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateTensionFromInput(this.value)"></div>
+                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="zoom-slider" min="0.1" max="5" step="0.1" value="1" oninput="updateZoom(this.value)"><input type="number" id="zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateZoomFromInput(this.value)"></div>
+                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="node-size-slider" min="4" max="30" step="1" value="12" oninput="updateNodeSize(this.value)"><input type="number" id="node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateNodeSizeFromInput(this.value)"></div>
+                        <div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="linewidth-slider" min="0.5" max="10" step="0.5" value="3" oninput="updateLineWidth(this.value)"><input type="number" id="linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateLineWidthFromInput(this.value)"></div>
+                        <button class="action-btn" onclick="toggleFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button>
                     </div>
                     <div id="structure-canvas"></div>
                 </div>
@@ -1278,7 +1308,7 @@
             const container = document.getElementById('heatmap-canvas');
             if (!container) return;
             container.innerHTML = '';
-            
+
             const n = sequence.length;
             const cellSize = Math.min(25, Math.max(15, 400 / n));
             const width = n * cellSize + 60;
@@ -1401,9 +1431,9 @@
             // 取前10个结构显示
             const displayStructures = structures.slice(0, 10);
             const totalProb = displayStructures.reduce((sum, s) => sum + s.probability, 0);
-            const pieData = displayStructures.map((s, i) => ({ 
-                ...s, 
-                color: colors[i % colors.length], 
+            const pieData = displayStructures.map((s, i) => ({
+                ...s,
+                color: colors[i % colors.length],
                 displayProb: s.probability / totalProb // 归一化显示概率
             }));
 
@@ -1436,18 +1466,18 @@
 
         function showSuboptDetail(data) {
             const detail = document.getElementById('complex-detail-view');
-            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${i18n[currentLang].structName} #${data.index}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.structure}</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].probability}</span><span class="result-value" style="color: var(--accent-green);">${(data.probability * 100).toFixed(4)}%</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].energy}</span><span class="result-value" style="color: var(--accent-green);">${data.energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="0.5" max="2" step="0.1" value="1" onchange="updateDetailTension(this.value)"><span id="detail-tension-val">1.0</span></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="1" max="6" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><span id="detail-linewidth-val">3</span></div></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
+            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${i18n[currentLang].structName} #${data.index}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.structure}</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].probability}</span><span class="result-value" style="color: var(--accent-green);">${(data.probability * 100).toFixed(4)}%</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].energy}</span><span class="result-value" style="color: var(--accent-green);">${data.energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><button class="action-btn" id="detail-lock-btn" onclick="toggleLockLayout()">🔒 ${currentLang === 'zh' ? '确定布局' : 'Lock'}</button><button class="action-btn" id="detail-auto-layout-btn" onclick="toggleDetailAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button><button class="action-btn" id="detail-compact-btn" onclick="toggleDetailCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button><button class="action-btn" id="detail-multichain-btn" onclick="toggleMultiChainMode()">🔗 ${currentLang === 'zh' ? '多链模式' : 'Multi-Chain'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="-1" max="1" step="0.05" value="0" oninput="updateDetailTensionFromSlider(this.value)"><input type="number" id="detail-tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailTensionFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div><button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button><button class="action-btn" onclick="rotateStructure()">🔃 ${currentLang === 'zh' ? '旋转' : 'Rotate'}</button></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
 
             const s = data.sequence, st = data.structure;
             // 为次优结构创建一个简化的配对矩阵（基于结构字符串）
             const matrix = Array(s.length).fill(null).map(() => Array(s.length).fill(0));
             const stack = [];
-            for (let i = 0; i < st.length; i++) { 
-                if (st[i] === '(') stack.push(i); 
-                else if (st[i] === ')') { const j = stack.pop(); matrix[i][j] = matrix[j][i] = 1; } 
+            for (let i = 0; i < st.length; i++) {
+                if (st[i] === '(') stack.push(i);
+                else if (st[i] === ')') { const j = stack.pop(); matrix[i][j] = matrix[j][i] = 1; }
             }
             currentDetailStructureData = { sequence: s, structure: st, pairsMatrix: matrix };
-            
+
             requestAnimationFrame(() => {
                 const canvasEl = document.getElementById('detail-canvas');
                 const parentWidth = canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800;
@@ -1514,7 +1544,11 @@
             if (!container) return;
             const width = customWidth || container.clientWidth || 700, height = customHeight || 500;
             container.innerHTML = '';
-            const n = sequence.length;
+
+            // 清理序列和结构（去除+号）
+            const cleanSequence = sequence.replace(/\+/g, '');
+            const cleanStructure = structure.replace(/\+/g, '');
+            const n = cleanSequence.length;
             if (n === 0) return;
 
             const maxPairProbs = [];
@@ -1530,15 +1564,68 @@
             const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
 
             const pairs = [], stack = [];
-            for (let i = 0; i < structure.length; i++) {
-                if (structure[i] === '(') stack.push(i);
-                else if (structure[i] === ')') pairs.push([stack.pop(), i]);
+            for (let i = 0; i < cleanStructure.length; i++) {
+                if (cleanStructure[i] === '(') stack.push(i);
+                else if (cleanStructure[i] === ')') pairs.push([stack.pop(), i]);
             }
 
-            const nodes = sequence.split('').map((base, i) => ({ id: i, base, paired: structure[i] !== '.', maxProb: maxPairProbs[i] }));
+            // 解析多链序列：识别每条链的起始和结束位置
+            let chainIndex = 0;
+            let nodeChain = [];
+            for (let i = 0; i < sequence.length; i++) {
+                if (sequence[i] === '+') {
+                    chainIndex++;
+                } else {
+                    nodeChain.push(chainIndex);
+                }
+            }
+            const totalChains = chainIndex + 1;
+
+            const nodes = cleanSequence.split('').map((base, i) => ({
+                id: i,
+                base,
+                paired: cleanStructure[i] !== '.',
+                maxProb: maxPairProbs[i],
+                chainIndex: nodeChain[i]  // 该核苷酸属于哪条链
+            }));
             const links = [];
-            for (let i = 0; i < n - 1; i++) links.push({ source: i, target: i + 1, type: 'backbone', distance: 25 / vizParams.tension });
-            pairs.forEach(([i, j]) => links.push({ source: i, target: j, type: 'pair', distance: 15 / vizParams.tension }));
+
+            // 紧凑布局：所有键（共价键和氢键）长度相等且固定
+            let backboneDist, pairDist, backboneStrength, pairStrength;
+            if (vizParams.compactLayout) {
+                // 紧凑布局：所有键长度相同，强度固定
+                backboneDist = vizParams.nodeRadius * 2;
+                pairDist = vizParams.nodeRadius * 2;
+                backboneStrength = 1.0;
+                pairStrength = 1.0;
+            } else {
+                // 默认模式
+                backboneDist = 25 / vizParams.tension;
+                pairDist = 15 / vizParams.tension;
+                backboneStrength = vizParams.autoLayout ? 1.0 : 0.5;
+                pairStrength = 0.8;
+            }
+
+            // 创建backbone链接（只在同一链内的相邻核苷酸之间创建）
+            // nodeChain[i] 存储第i个核苷酸属于哪条链
+            for (let i = 0; i < n - 1; i++) {
+                if (nodeChain[i] === nodeChain[i + 1]) {
+                    links.push({ source: i, target: i + 1, type: 'backbone', distance: backboneDist });
+                }
+            }
+            pairs.forEach(([i, j]) => links.push({ source: i, target: j, type: 'pair', distance: pairDist }));
+
+            // 自动布局模式：初始位置在圆周上
+            if (vizParams.autoLayout) {
+                const centerX = (width - 100) / 2, centerY = height / 2;
+                const radius = Math.min(width - 150, height) / 2 - 40;
+                const n = cleanSequence.length;
+                nodes.forEach((node, i) => {
+                    const angle = (2 * Math.PI * i / n) - Math.PI / 2;
+                    node.x = centerX + radius * Math.cos(angle);
+                    node.y = centerY + radius * Math.sin(angle);
+                });
+            }
 
             const mainDiv = d3.select(container).style('display', 'flex');
             const svg = mainDiv.append('svg').attr('width', width - 100).attr('height', height);
@@ -1553,28 +1640,77 @@
             legendDiv.append('div').style('color', 'var(--text-secondary)').style('font-size', '10px').style('text-align', 'center').text(currentLang === 'zh' ? '配对概率' : 'Pair Prob');
 
             const simulation = d3.forceSimulation(nodes)
-                .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance).strength(d => d.type === 'pair' ? 0.8 : 0.5))
+                .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance).strength(d => d.type === 'pair' ? pairStrength : backboneStrength))
                 .force('charge', d3.forceManyBody().strength(-100 / vizParams.tension))
                 .force('center', d3.forceCenter((width - 100) / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(12));
+                .force('collision', d3.forceCollide().radius((vizParams.nodeRadius || 12) + 2));
 
+            // 创建主绘图组用于缩放和旋转
+            const g = svg.append('g').attr('class', 'main-group').attr('id', 'main-structure-group');
+            
             const isDark = currentTheme === 'dark';
-            const link = svg.append('g').selectAll('line').data(links).enter().append('line')
+            const link = g.append('g').selectAll('line').data(links).enter().append('line')
                 .attr('stroke', d => d.type === 'pair' ? (isDark ? '#00d9ff' : '#0066cc') : (isDark ? '#fff' : '#333'))
                 .attr('stroke-width', d => d.type === 'pair' ? vizParams.pairWidth : vizParams.backboneWidth).attr('opacity', d => d.type === 'pair' ? 0.8 : 0.6);
 
-            const node = svg.append('g').selectAll('g').data(nodes).enter().append('g').attr('cursor', 'pointer')
-                .call(d3.drag().on('start', e => { if (!e.active) simulation.alphaTarget(0.3).restart(); e.subject.fx = e.subject.x; e.subject.fy = e.subject.y; })
+            const node = g.append('g').selectAll('g').data(nodes).enter().append('g').attr('cursor', vizParams.lockLayout ? 'default' : 'pointer');
+            
+            // 只有在未锁定布局时才允许拖拽
+            if (!vizParams.lockLayout) {
+                node.call(d3.drag().on('start', e => { if (!e.active) simulation.alphaTarget(0.3).restart(); e.subject.fx = e.subject.x; e.subject.fy = e.subject.y; })
                     .on('drag', e => { e.subject.fx = e.x; e.subject.fy = e.y; })
                     .on('end', e => { if (!e.active) simulation.alphaTarget(0); e.subject.fx = null; e.subject.fy = null; }));
+            }
 
-            node.append('circle').attr('r', 12).attr('fill', d => probColorScale(d.maxProb)).attr('stroke', d => baseColors[d.base] || '#888').attr('stroke-width', 2);
-            node.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '10px').attr('font-weight', 'bold').attr('fill', '#000').text(d => d.base);
+            // 渲染节点圆圈
+            const nodeRadius = vizParams.nodeRadius || 12;
+            if (vizParams.multiChainMode && totalChains > 1) {
+                // 多链模式：填充色由链决定，轮廓色由配对概率决定
+                node.append('circle').attr('r', nodeRadius)
+                    .attr('fill', d => chainColors[d.chainIndex % chainColors.length])
+                    .attr('stroke', d => probColorScale(d.maxProb))
+                    .attr('stroke-width', 3);
+            } else {
+                // 默认模式：填充色由配对概率决定，轮廓色由碱基类型决定
+                node.append('circle').attr('r', nodeRadius)
+                    .attr('fill', d => probColorScale(d.maxProb))
+                    .attr('stroke', d => baseColors[d.base] || '#888')
+                    .attr('stroke-width', 2);
+            }
+            node.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', `${Math.max(8, nodeRadius - 2)}px`).attr('font-weight', 'bold').attr('fill', '#000').text(d => d.base);
 
             // 点击碱基显示配对概率详情
             node.on('click', (event, d) => {
                 event.stopPropagation();
                 showBaseInfo(d.id, d.base, sequence, pairsMatrix, structure, infoPanelId);
+            });
+
+            // 应用缩放和旋转变换
+            function applyZoom() {
+                const z = vizParams.zoom || 1;
+                const r = vizParams.rotation || 0;
+                const cx = (width - 100) / 2, cy = height / 2;
+                g.attr('transform', `translate(${cx}, ${cy}) scale(${z}) translate(${-cx}, ${-cy}) rotate(${r})`);
+            }
+            applyZoom();
+
+            // 鼠标滚轮缩放（无下限限制）
+            svg.on('wheel', function(event) {
+                event.preventDefault();
+                const delta = event.deltaY > 0 ? -0.1 : 0.1;
+                let newZoom = (vizParams.zoom || 1) + delta;
+                if (newZoom < 0.1) newZoom = 0.1;  // 最小0.1倍，但无上限
+                vizParams.zoom = newZoom;
+                applyZoom();
+                // 更新UI控件
+                const zs = document.getElementById('zoom-slider');
+                const zi = document.getElementById('zoom-input');
+                const dzs = document.getElementById('detail-zoom');
+                const dzi = document.getElementById('detail-zoom-input');
+                if (zs) zs.value = Math.min(newZoom, 5).toFixed(1);  // 滑动条显示限制在5
+                if (zi) zi.value = newZoom.toFixed(2);
+                if (dzs) dzs.value = Math.min(newZoom, 5).toFixed(1);
+                if (dzi) dzi.value = newZoom.toFixed(2);
             });
 
             simulation.on('tick', () => {
@@ -1601,7 +1737,7 @@
                 <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '碱基' : 'Base'}</span><span class="result-value">${base}</span></div>
                 <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '状态' : 'Status'}</span><span class="result-value">${structure[index] === '.' ? (currentLang === 'zh' ? '未配对' : 'Unpaired') : (currentLang === 'zh' ? '已配对' : 'Paired')}</span></div>
                 <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '最大配对概率' : 'Max Pair Prob'}</span><span class="result-value">${(Math.max(...pairsMatrix[index]) * 100).toFixed(1)}%</span></div>`;
-            
+
             if (probs.length > 0) {
                 infoHtml += `<h5 style="margin-top: 10px; color: var(--text-secondary);">${currentLang === 'zh' ? '配对概率列表' : 'Pair Probabilities'}</h5>
                     <div style="max-height: 150px; overflow-y: auto;">`;
@@ -1626,7 +1762,47 @@
             if (!container) return;
             container.simulation && container.simulation.stop();
             const canvasWidth = container.clientWidth || 700;
-            drawFixedLayout(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, container, null, 'base-info-panel', canvasWidth);
+            // 使用自动布局绘制预览结构
+            const savedAutoLayout = vizParams.autoLayout;
+            vizParams.autoLayout = true;  // 预览默认使用自动布局
+            drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, container, canvasWidth, 500, 'base-info-panel');
+            vizParams.autoLayout = savedAutoLayout;
+        }
+
+        // 切换自动布局模式
+        function toggleAutoLayout() {
+            vizParams.autoLayout = !vizParams.autoLayout;
+            const btn = document.getElementById('auto-layout-btn');
+            if (btn) {
+                btn.style.background = vizParams.autoLayout ? 'var(--accent-green)' : '';
+                btn.textContent = (vizParams.autoLayout ? '🔄 ' : '🔄 ') + (currentLang === 'zh' ? '自动布局' : 'Auto Layout');
+            }
+            if (currentStructureData) {
+                const container = document.getElementById('structure-canvas');
+                if (container) {
+                    container.simulation && container.simulation.stop();
+                    const canvasWidth = container.clientWidth || 700;
+                    drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, container, canvasWidth, 500, 'base-info-panel');
+                }
+            }
+        }
+
+        // 切换紧凑布局
+        function toggleCompactLayout() {
+            vizParams.compactLayout = !vizParams.compactLayout;
+            const btn = document.getElementById('compact-btn');
+            if (btn) {
+                btn.style.background = vizParams.compactLayout ? 'var(--accent-green)' : '';
+                btn.textContent = (vizParams.compactLayout ? '📦 ' : '📦 ') + (currentLang === 'zh' ? '紧凑布局' : 'Compact');
+            }
+            if (currentStructureData) {
+                const container = document.getElementById('structure-canvas');
+                if (container) {
+                    container.simulation && container.simulation.stop();
+                    const canvasWidth = container.clientWidth || 700;
+                    drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, container, canvasWidth, 500, 'base-info-panel');
+                }
+            }
         }
 
         function drawFixedLayout(sequence, structure, pairsMatrix, container, customHeight, infoPanelId, customWidth) {
@@ -1659,7 +1835,7 @@
             const nodeGroup = svg.selectAll('g.node').data(nodes).enter().append('g').attr('transform', d => `translate(${d.x}, ${d.y})`).attr('cursor', 'pointer');
             nodeGroup.append('circle').attr('r', 12).attr('fill', d => probColorScale(d.maxProb)).attr('stroke', d => baseColors[d.base]).attr('stroke-width', 2);
             nodeGroup.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '10px').attr('font-weight', 'bold').attr('fill', '#000').text(d => d.base);
-            
+
             // 点击碱基显示配对概率详情
             nodeGroup.on('click', (event, d) => {
                 event.stopPropagation();
@@ -1670,7 +1846,64 @@
             legendDiv.html(`<div style="color: var(--text-secondary); font-size: 10px; text-align: center;">✓ ${currentLang === 'zh' ? '固定布局' : 'Fixed'}</div>`);
         }
 
-        function updateTension(v) { vizParams.tension = parseFloat(v); document.getElementById('tension-value').textContent = v; if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix); }
+        // 松紧度控制：指数形式，范围0.1-10
+        function updateTensionFromSlider(sliderVal) {
+            const tension = Math.pow(10, parseFloat(sliderVal));
+            vizParams.tension = tension;
+            document.getElementById('tension-input').value = tension.toFixed(2);
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateTensionFromInput(inputVal) {
+            let tension = parseFloat(inputVal);
+            if (isNaN(tension) || tension < 0.1) tension = 0.1;
+            if (tension > 10) tension = 10;
+            vizParams.tension = tension;
+            const sliderVal = Math.log10(tension);
+            document.getElementById('tension-slider').value = sliderVal.toFixed(2);
+            document.getElementById('tension-input').value = tension.toFixed(2);
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateZoom(v) {
+            vizParams.zoom = parseFloat(v);
+            document.getElementById('zoom-input').value = parseFloat(v).toFixed(2);
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateZoomFromInput(v) {
+            let z = parseFloat(v);
+            if (isNaN(z) || z < 0.1) z = 0.1;
+            vizParams.zoom = z;
+            document.getElementById('zoom-slider').value = Math.min(z, 5).toFixed(1);
+            document.getElementById('zoom-input').value = z.toFixed(2);
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateNodeSize(v) {
+            vizParams.nodeRadius = parseFloat(v);
+            document.getElementById('node-size-input').value = v;
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateNodeSizeFromInput(v) {
+            let s = parseFloat(v);
+            if (isNaN(s) || s < 1) s = 1;
+            vizParams.nodeRadius = s;
+            document.getElementById('node-size-slider').value = Math.max(4, Math.min(s, 30));
+            document.getElementById('node-size-input').value = s;
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateLineWidth(v) {
+            vizParams.backboneWidth = parseFloat(v);
+            vizParams.pairWidth = parseFloat(v) + 1;
+            document.getElementById('linewidth-input').value = v;
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
+        function updateLineWidthFromInput(v) {
+            let w = parseFloat(v);
+            if (isNaN(w) || w < 0.1) w = 0.1;
+            vizParams.backboneWidth = w;
+            vizParams.pairWidth = w + 1;
+            document.getElementById('linewidth-slider').value = Math.max(0.5, Math.min(w, 10));
+            document.getElementById('linewidth-input').value = w;
+            if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
+        }
         function updateLineWidth(v) { vizParams.backboneWidth = parseFloat(v); vizParams.pairWidth = parseFloat(v) + 1; document.getElementById('linewidth-value').textContent = v; if (currentStructureData) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix); }
 
         // ==================== 饼图 ====================
@@ -1726,13 +1959,31 @@
             for (let i = 0; i < struct.length; i++) { if (struct[i] === '(') stack.push(i); else if (struct[i] === ')') pairs.push([stack.pop(), i]); }
 
             const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
-            const nodes = seq.split('').map((base, i) => ({ id: i, base, paired: struct[i] !== '.' }));
+            
+            // 圆周初始布局（自动布局）
+            const centerX = width / 2, centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 20;
+            const nodes = seq.split('').map((base, i) => {
+                const angle = (2 * Math.PI * i / n) - Math.PI / 2;
+                return { 
+                    id: i, 
+                    base, 
+                    paired: struct[i] !== '.',
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                };
+            });
+            
             const links = [];
-            for (let i = 0; i < n - 1; i++) links.push({ source: i, target: i + 1, type: 'backbone', distance: r * 1.8 });
-            pairs.forEach(([i, j]) => links.push({ source: i, target: j, type: 'pair', distance: r * 1.2 }));
+            for (let i = 0; i < n - 1; i++) links.push({ source: i, target: i + 1, type: 'backbone', distance: r * 2, strength: 1.0 });
+            pairs.forEach(([i, j]) => links.push({ source: i, target: j, type: 'pair', distance: r * 2, strength: 0.8 }));
 
             const svg = d3.select('#preview-struct').append('svg').attr('width', width).attr('height', height);
-            const simulation = d3.forceSimulation(nodes).force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance).strength(d => d.type === 'pair' ? 0.8 : 0.5)).force('charge', d3.forceManyBody().strength(-40)).force('center', d3.forceCenter(width / 2, height / 2)).force('collision', d3.forceCollide().radius(r + 2));
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance).strength(d => d.strength))
+                .force('charge', d3.forceManyBody().strength(-80))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(r + 2));
 
             const link = svg.append('g').selectAll('line').data(links).enter().append('line').attr('stroke', d => d.type === 'pair' ? '#00d9ff' : '#666').attr('stroke-width', d => d.type === 'pair' ? 2 : 1);
             const node = svg.append('g').selectAll('g').data(nodes).enter().append('g');
@@ -1743,20 +1994,36 @@
 
         function showComplexDetail(data) {
             const detail = document.getElementById('complex-detail-view');
-            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${data.name}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.mfe_structure}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '浓度' : 'Conc'}</span><span class="result-value" style="color: var(--accent-green);">${(data.concentration * 1e9).toFixed(4)} nM</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量' : 'Energy'}</span><span class="result-value" style="color: var(--accent-green);">${data.mfe_energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="0.5" max="2" step="0.1" value="1" onchange="updateDetailTension(this.value)"><span id="detail-tension-val">1.0</span></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="1" max="6" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><span id="detail-linewidth-val">3</span></div></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
+            // 计算链数量
+            const chainCount = (data.sequence.match(/\+/g) || []).length + 1;
+            // 生成颜色选择器HTML
+            let colorPickersHtml = '';
+            if (chainCount > 1) {
+                colorPickersHtml = `<div id="chain-colors-panel" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding: 10px; background: var(--bg-card); border-radius: 6px;">
+                    <span style="color: var(--text-secondary); font-size: 0.9em;">${currentLang === 'zh' ? '链颜色:' : 'Chain colors:'}</span>`;
+                for (let i = 0; i < chainCount; i++) {
+                    colorPickersHtml += `<div style="display: flex; align-items: center; gap: 5px;">
+                        <label style="font-size: 0.8em; color: var(--text-secondary);">${currentLang === 'zh' ? '链' : 'Chain'}${i + 1}:</label>
+                        <input type="color" id="chain-color-${i}" value="${chainColors[i % chainColors.length]}" onchange="updateChainColor(${i}, this.value)" style="width: 30px; height: 25px; cursor: pointer;">
+                    </div>`;
+                }
+                colorPickersHtml += `</div>`;
+            }
+            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${data.name}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.mfe_structure}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '浓度' : 'Conc'}</span><span class="result-value" style="color: var(--accent-green);">${(data.concentration * 1e9).toFixed(4)} nM</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量' : 'Energy'}</span><span class="result-value" style="color: var(--accent-green);">${data.mfe_energy.toFixed(2)} kcal/mol</span></div></div>${colorPickersHtml}<div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><button class="action-btn" id="detail-lock-btn" onclick="toggleLockLayout()">🔒 ${currentLang === 'zh' ? '确定布局' : 'Lock'}</button><button class="action-btn" id="detail-auto-layout-btn" onclick="toggleDetailAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button><button class="action-btn" id="detail-compact-btn" onclick="toggleDetailCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button><button class="action-btn" id="detail-multichain-btn" onclick="toggleMultiChainMode()">🔗 ${currentLang === 'zh' ? '多链模式' : 'Multi-Chain'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="-1" max="1" step="0.05" value="0" oninput="updateDetailTensionFromSlider(this.value)"><input type="number" id="detail-tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailTensionFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div><button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button><button class="action-btn" onclick="rotateStructure()">🔃 ${currentLang === 'zh' ? '旋转' : 'Rotate'}</button></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
 
             const s = data.sequence.replace(/\+/g, ''), st = data.mfe_structure.replace(/\+/g, '');
             const matrix = Array(s.length).fill(null).map(() => Array(s.length).fill(0));
             const stack = [];
             for (let i = 0; i < st.length; i++) { if (st[i] === '(') stack.push(i); else if (st[i] === ')') { const j = stack.pop(); matrix[i][j] = matrix[j][i] = 1; } }
-            currentDetailStructureData = { sequence: s, structure: st, pairsMatrix: matrix };
-            
+            // 保存原始序列（包含+）用于多链识别
+            currentDetailStructureData = { sequence: data.sequence, cleanSequence: s, structure: st, pairsMatrix: matrix };
+
             // 使用 requestAnimationFrame 确保容器已渲染
             requestAnimationFrame(() => {
                 const canvasEl = document.getElementById('detail-canvas');
                 const parentWidth = canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800;
                 const canvasWidth = canvasEl.clientWidth || parentWidth;
-                drawStructureForce(s, st, matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+                drawStructureForce(data.sequence, st, matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
             });
         }
 
@@ -1769,9 +2036,180 @@
             drawFixedLayout(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, 450, 'detail-base-info-panel', canvasWidth);
         }
 
-        function updateDetailTension(v) {
-            vizParams.tension = parseFloat(v);
-            document.getElementById('detail-tension-val').textContent = v;
+        // detail视图的自动布局切换
+        function toggleDetailAutoLayout() {
+            vizParams.autoLayout = !vizParams.autoLayout;
+            const btn = document.getElementById('detail-auto-layout-btn');
+            if (btn) {
+                btn.style.background = vizParams.autoLayout ? 'var(--accent-green)' : '';
+            }
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+
+        // detail视图的紧凑布局切换
+        function toggleDetailCompactLayout() {
+            vizParams.compactLayout = !vizParams.compactLayout;
+            const btn = document.getElementById('detail-compact-btn');
+            if (btn) {
+                btn.style.background = vizParams.compactLayout ? 'var(--accent-green)' : '';
+            }
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+
+        // 更新链颜色
+        function updateChainColor(chainIndex, color) {
+            chainColors[chainIndex] = color;
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+
+        // 切换确定布局（锁定拖拽）
+        function toggleLockLayout() {
+            vizParams.lockLayout = !vizParams.lockLayout;
+            const btn = document.getElementById('detail-lock-btn');
+            if (btn) {
+                btn.style.background = vizParams.lockLayout ? 'var(--accent-green)' : '';
+            }
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+
+        // 切换多链模式
+        function toggleMultiChainMode() {
+            vizParams.multiChainMode = !vizParams.multiChainMode;
+            const btn = document.getElementById('detail-multichain-btn');
+            if (btn) {
+                btn.style.background = vizParams.multiChainMode ? 'var(--accent-green)' : '';
+            }
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+
+        // 更新核苷酸大小
+        function updateDetailNodeSize(v) {
+            vizParams.nodeRadius = parseFloat(v);
+            const input = document.getElementById('detail-node-size-input');
+            if (input) input.value = v;
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+        function updateDetailNodeSizeFromInput(v) {
+            let s = parseFloat(v);
+            if (isNaN(s) || s < 1) s = 1;
+            vizParams.nodeRadius = s;
+            const slider = document.getElementById('detail-node-size');
+            if (slider) slider.value = Math.max(4, Math.min(s, 30));
+            const input = document.getElementById('detail-node-size-input');
+            if (input) input.value = s;
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    c.simulation && c.simulation.stop();
+                    const canvasWidth = c.clientWidth || (c.parentElement ? c.parentElement.clientWidth : 800);
+                    drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, c, canvasWidth, 450, 'detail-base-info-panel');
+                }
+            }
+        }
+
+        // 旋转结构（每次顺时针旋转90度）
+        function rotateStructure() {
+            vizParams.rotation = ((vizParams.rotation || 0) + 90) % 360;
+            if (currentDetailStructureData) {
+                const c = document.getElementById('detail-canvas');
+                if (c) {
+                    const g = c.querySelector('#main-structure-group');
+                    if (g) {
+                        const svg = c.querySelector('svg');
+                        const w = svg ? parseInt(svg.getAttribute('width')) : 800;
+                        const h = svg ? parseInt(svg.getAttribute('height')) : 450;
+                        const cx = w / 2, cy = h / 2;
+                        const z = vizParams.zoom || 1;
+                        g.style.transform = `translate(${cx}px, ${cy}px) scale(${z}) translate(${-cx}px, ${-cy}px) rotate(${vizParams.rotation}deg)`;
+                        g.style.transformOrigin = `${cx}px ${cy}px`;
+                    }
+                }
+            }
+        }
+
+        // detail视图的松紧度控制：指数形式
+        function updateDetailTensionFromSlider(sliderVal) {
+            const tension = Math.pow(10, parseFloat(sliderVal));
+            vizParams.tension = tension;
+            document.getElementById('detail-tension-input').value = tension.toFixed(2);
+            if (currentDetailStructureData) {
+                const canvasEl = document.getElementById('detail-canvas');
+                const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+        function updateDetailTensionFromInput(inputVal) {
+            let tension = parseFloat(inputVal);
+            if (isNaN(tension) || tension < 0.1) tension = 0.1;
+            if (tension > 10) tension = 10;
+            vizParams.tension = tension;
+            const sliderVal = Math.log10(tension);
+            document.getElementById('detail-tension').value = sliderVal.toFixed(2);
+            document.getElementById('detail-tension-input').value = tension.toFixed(2);
+            if (currentDetailStructureData) {
+                const canvasEl = document.getElementById('detail-canvas');
+                const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+
+        function updateDetailZoom(v) {
+            vizParams.zoom = parseFloat(v);
+            document.getElementById('detail-zoom-input').value = parseFloat(v).toFixed(2);
+            if (currentDetailStructureData) {
+                const canvasEl = document.getElementById('detail-canvas');
+                const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+        function updateDetailZoomFromInput(v) {
+            let z = parseFloat(v);
+            if (isNaN(z) || z < 0.1) z = 0.1;
+            vizParams.zoom = z;
+            document.getElementById('detail-zoom').value = Math.min(z, 5).toFixed(1);
+            document.getElementById('detail-zoom-input').value = z.toFixed(2);
             if (currentDetailStructureData) {
                 const canvasEl = document.getElementById('detail-canvas');
                 const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
@@ -1782,11 +2220,106 @@
         function updateDetailLineWidth(v) {
             vizParams.backboneWidth = parseFloat(v);
             vizParams.pairWidth = parseFloat(v) + 1;
-            document.getElementById('detail-linewidth-val').textContent = v;
+            const input = document.getElementById('detail-linewidth-input');
+            if (input) input.value = v;
             if (currentDetailStructureData) {
                 const canvasEl = document.getElementById('detail-canvas');
                 const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
                 drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+        function updateDetailLineWidthFromInput(v) {
+            let w = parseFloat(v);
+            if (isNaN(w) || w < 0.1) w = 0.1;
+            vizParams.backboneWidth = w;
+            vizParams.pairWidth = w + 1;
+            const slider = document.getElementById('detail-linewidth');
+            if (slider) slider.value = Math.max(0.5, Math.min(w, 10));
+            const input = document.getElementById('detail-linewidth-input');
+            if (input) input.value = w;
+            if (currentDetailStructureData) {
+                const canvasEl = document.getElementById('detail-canvas');
+                const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                drawStructureForce(currentDetailStructureData.sequence, currentDetailStructureData.structure, currentDetailStructureData.pairsMatrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            }
+        }
+
+        function toggleDetailFullscreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+            if (!overlay) return;
+            overlay.classList.toggle('active');
+            if (overlay.classList.contains('active') && currentDetailStructureData) {
+                const c = overlay.querySelector('#fullscreen-canvas');
+                const sourceCanvas = document.getElementById('detail-canvas');
+                if (c && sourceCanvas) {
+                    // 复制当前 SVG 内容
+                    c.innerHTML = sourceCanvas.innerHTML;
+
+                    // 获取SVG并调整尺寸
+                    const svg = c.querySelector('svg');
+                    if (svg) {
+                        const fullWidth = window.innerWidth;
+                        const fullHeight = window.innerHeight - 60;
+
+                        // 设置全屏尺寸
+                        svg.setAttribute('width', fullWidth);
+                        svg.setAttribute('height', fullHeight);
+
+                        // 获取内容的边界框
+                        const g = svg.querySelector('.main-group');
+                        if (g) {
+                            try {
+                                const bbox = g.getBBox();
+                                // 计算内容中心
+                                const contentCenterX = bbox.x + bbox.width / 2;
+                                const contentCenterY = bbox.y + bbox.height / 2;
+                                // 计算缩放比例以适应全屏
+                                const scaleX = fullWidth / (bbox.width + 40);
+                                const scaleY = fullHeight / (bbox.height + 40);
+                                fullscreenZoom = Math.min(scaleX, scaleY, 2); // 最大2倍
+                                fullscreenZoom = Math.max(fullscreenZoom, 0.5); // 最小0.5倍
+                            } catch(e) {
+                                fullscreenZoom = 1;
+                            }
+                        }
+
+                        // 应用缩放
+                        applyFullscreenZoom(c);
+
+                        // 添加滚轮缩放支持
+                        svg.onwheel = function(e) {
+                            e.preventDefault();
+                            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                            fullscreenZoom = Math.max(0.2, Math.min(3, fullscreenZoom + delta));
+                            applyFullscreenZoom(c);
+                        };
+                    }
+                }
+            }
+        }
+
+        function applyFullscreenZoom(container) {
+            const svg = container.querySelector('svg');
+            const g = container.querySelector('.main-group');
+            if (svg && g) {
+                const fullWidth = parseInt(svg.getAttribute('width')) || window.innerWidth;
+                const fullHeight = parseInt(svg.getAttribute('height')) || window.innerHeight - 60;
+
+                // 获取内容边界
+                try {
+                    const bbox = g.getBBox();
+                    const contentCenterX = bbox.x + bbox.width / 2;
+                    const contentCenterY = bbox.y + bbox.height / 2;
+                    const screenCenterX = fullWidth / 2;
+                    const screenCenterY = fullHeight / 2;
+
+                    // 居中并缩放
+                    g.style.transform = `translate(${screenCenterX - contentCenterX * fullscreenZoom}px, ${screenCenterY - contentCenterY * fullscreenZoom}px) scale(${fullscreenZoom})`;
+                    g.style.transformOrigin = '0 0';
+                } catch(e) {
+                    // 回退方案
+                    g.style.transform = `translate(${fullWidth/2}px, ${fullHeight/2}px) scale(${fullscreenZoom}) translate(-50%, -50%)`;
+                }
             }
         }
 
@@ -1835,7 +2368,48 @@
             overlay.classList.toggle('active');
             if (overlay.classList.contains('active') && currentStructureData) {
                 const c = overlay.querySelector('#fullscreen-canvas');
-                if (c) drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix, c, window.innerWidth, window.innerHeight - 60);
+                const sourceCanvas = document.getElementById('structure-canvas');
+                if (c && sourceCanvas) {
+                    // 复制当前 SVG 内容
+                    c.innerHTML = sourceCanvas.innerHTML;
+
+                    // 获取SVG并调整尺寸
+                    const svg = c.querySelector('svg');
+                    if (svg) {
+                        const fullWidth = window.innerWidth;
+                        const fullHeight = window.innerHeight - 60;
+
+                        // 设置全屏尺寸
+                        svg.setAttribute('width', fullWidth);
+                        svg.setAttribute('height', fullHeight);
+
+                        // 获取内容的边界框
+                        const g = svg.querySelector('.main-group');
+                        if (g) {
+                            try {
+                                const bbox = g.getBBox();
+                                // 计算缩放比例以适应全屏
+                                const scaleX = fullWidth / (bbox.width + 40);
+                                const scaleY = fullHeight / (bbox.height + 40);
+                                fullscreenZoom = Math.min(scaleX, scaleY, 2);
+                                fullscreenZoom = Math.max(fullscreenZoom, 0.5);
+                            } catch(e) {
+                                fullscreenZoom = 1;
+                            }
+                        }
+
+                        // 应用缩放
+                        applyFullscreenZoom(c);
+
+                        // 添加滚轮缩放支持
+                        svg.onwheel = function(e) {
+                            e.preventDefault();
+                            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                            fullscreenZoom = Math.max(0.2, Math.min(3, fullscreenZoom + delta));
+                            applyFullscreenZoom(c);
+                        };
+                    }
+                }
             }
         }
 
@@ -1852,10 +2426,31 @@
             } catch (e) { alert(currentLang === 'zh' ? '启动失败: ' : 'Failed: ' + e.message); }
         }
 
+        async function downloadProject() {
+            if (!analysisResult) { alert(currentLang === 'zh' ? '请先进行分析' : 'Run analysis first'); return; }
+            try {
+                const saveRes = await fetch('/api/project/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: `nupack_${Date.now()}`, results: analysisResult, material: document.getElementById('material').value, temperature: parseFloat(document.getElementById('temperature').value), sodium: parseFloat(document.getElementById('sodium').value), magnesium: parseFloat(document.getElementById('magnesium').value) }) });
+                const saveData = await saveRes.json();
+                if (saveData.error) throw new Error(saveData.error);
+                // 触发下载
+                const downloadRes = await fetch('/api/project/download', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ project_dir: saveData.project_dir }) });
+                if (!downloadRes.ok) throw new Error('Download failed');
+                const blob = await downloadRes.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = saveData.project_dir.split('/').pop() + '.zip';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } catch (e) { alert(currentLang === 'zh' ? '下载失败: ' : 'Download failed: ' + e.message); }
+        }
+
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             updateLanguage();
-            
+
             // 初始化颜色设置
             document.getElementById('color-low').addEventListener('input', onColorChange);
             document.getElementById('color-high').addEventListener('input', onColorChange);

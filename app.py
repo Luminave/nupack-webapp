@@ -3,7 +3,7 @@
 NUPACK Web Interface - 本地可视化核酸分析工具
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 from nupack import *
 import json
 import os
@@ -476,6 +476,40 @@ def save_project():
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)})
+
+
+@app.route('/api/project/download', methods=['POST'])
+def download_project():
+    """下载项目为ZIP文件"""
+    import zipfile
+    import io
+    try:
+        data = request.json
+        project_dir = data.get('project_dir', '')
+        if not project_dir or not os.path.exists(project_dir):
+            return jsonify({'error': 'Project not found'}), 404
+        
+        # 创建内存中的ZIP文件
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for root, dirs, files in os.walk(project_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, os.path.dirname(project_dir))
+                    zf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        project_name = os.path.basename(project_dir)
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'{project_name}.zip'
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/jupyter/open', methods=['POST'])
