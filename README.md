@@ -1,5 +1,7 @@
 # NUPACK Web v1.3.0 - 核酸结构可视化分析工具
 
+> 🌐 **[English Documentation / 英文文档](README_EN.md)**
+
 > 📝 **说明**：本文档由 AI 撰写。如果你是初次使用的小白用户，强烈建议先阅读这篇详细的图文安装教程：
 > 
 > 🔗 **[知乎专栏：NUPACK Web 小白安装教程](https://zhuanlan.zhihu.com/p/2018702350303380650)**
