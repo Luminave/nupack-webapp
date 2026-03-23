@@ -1,4 +1,4 @@
-# NUPACK Web v1.3.0 - 核酸结构可视化分析工具
+# NUPACK Web v1.3.0 - 本地部署NUPACK，核酸结构可视化分析工具
 
 > 🌐 **[English Documentation / 英文文档](README_EN.md)**
 
