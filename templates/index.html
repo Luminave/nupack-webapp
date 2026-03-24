@@ -2713,6 +2713,20 @@
             } catch (error) {
                 console.error('VARNA错误:', error);
                 btn.textContent = '❌ 失败';
+                
+                // 显示详细错误信息
+                const errorMsg = error.message || '未知错误';
+                let alertMsg = 'VARNA渲染失败:\n\n' + errorMsg;
+                
+                if (errorMsg.includes('VARNA不可用') || errorMsg.includes('jar')) {
+                    alertMsg += '\n\n解决方案:\n';
+                    alertMsg += '1. 安装Java: sudo apt install openjdk-11-jre\n';
+                    alertMsg += '2. 确保lib/VARNAv3-93.jar文件存在\n';
+                    alertMsg += '3. 重启应用';
+                }
+                
+                alert(alertMsg);
+                
                 setTimeout(() => {
                     btn.textContent = originalText;
                     btn.disabled = false;
