@@ -24,6 +24,8 @@
 2. 点击橙红色的 **"🎨 下载VARNA结构图"** 按钮
 3. 自动下载SVG文件，可直接用于论文发表
 
+![VARNA导出示例 - 多链结构](static/images/varna_example.svg)
+
 **引用文献**：
 > VARNA: Interactive drawing and editing of the RNA secondary structure  
 > Kévin Darty, Alain Denise and Yann Ponty  
@@ -89,6 +91,15 @@
 
 - Python 3.8+
 - NUPACK 4.0+ (需要有效的许可证)
+- Java 11+ (完整版，**不支持headless版本**)
+
+> ⚠️ **重要提示**：VARNA功能需要完整的Java运行环境（包含AWT图形库）。
+> 
+> 如果你已经安装了 `openjdk-11-jre-headless`，请先卸载：
+> ```bash
+> sudo apt remove openjdk-11-jre-headless
+> ```
+> 然后重新运行安装脚本，它会自动安装完整版的Java。
 
 ## 🚀 快速安装
 

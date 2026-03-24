@@ -6,6 +6,8 @@
 
 A localized web interface for nucleic acid analysis based on Flask + NUPACK, providing an intuitive visualization experience.
 
+![NUPACK Web Interface](static/images/screenshot.png)
+
 **[中文文档 / Chinese Documentation](README.md)**
 
 ## 🆕 v1.4.0 New Features
@@ -23,6 +25,8 @@ A localized web interface for nucleic acid analysis based on Flask + NUPACK, pro
 1. Run structure analysis (single or multi-chain)
 2. Click the orange-red **"🎨 Download VARNA Structure"** button
 3. SVG file is automatically downloaded, ready for publication
+
+![VARNA Export Example - Multi-chain Structure](static/images/varna_example.svg)
 
 **Citation**:
 > VARNA: Interactive drawing and editing of the RNA secondary structure  
@@ -231,6 +235,17 @@ nupack-webapp/
 
 - [NUPACK](https://www.nupack.org/) - Nucleic acid structure prediction software
 - [D3.js](https://d3js.org/) - Data visualization library
+- [Flask](https://flask.palletsprojects.com/) - Web framework
+
+## 📄 License
+
+This project is for learning and research purposes only. Use of NUPACK functionality requires compliance with the NUPACK license agreement.
+
+---
+
+**Author**: Victor.Guo  
+**GitHub**: https://github.com/Luminave/nupack-webapp
+ttps://d3js.org/) - Data visualization library
 - [Flask](https://flask.palletsprojects.com/) - Web framework
 
 ## 📄 License
