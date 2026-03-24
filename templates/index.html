@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NUPACK Web v1.3.0</title>
+    <title>NUPACK Web v1.4.0</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root {
@@ -172,7 +172,7 @@
 
         .main-layout {
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 1fr 2fr;
             gap: 15px;
             width: 100%;
         }
@@ -520,7 +520,7 @@
         }
 
         @media (max-width: 1000px) {
-            .main-layout { grid-template-columns: 280px 1fr; }
+            .main-layout { grid-template-columns: 1fr 2fr; }
         }
 
         @media (max-width: 800px) {
@@ -531,6 +531,58 @@
         }
 
         .hidden { display: none !important; }
+
+        /* VARNA集成样式 */
+        #varna-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid var(--accent-green, #4CAF50);
+            border-radius: 12px;
+            background: var(--bg-canvas, white);
+            overflow: auto;
+            max-height: 600px;
+            position: relative;
+        }
+
+        .varna-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color, #e0e0e0);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .varna-controls button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            background: var(--accent-blue, #2196F3);
+            color: white;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .varna-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+
+        
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .varna-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-secondary, #666);
+        }
     </style>
 </head>
 <body>
@@ -1291,6 +1343,7 @@
                         <div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="node-size-slider" min="4" max="30" step="1" value="12" oninput="updateNodeSize(this.value)"><input type="number" id="node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateNodeSizeFromInput(this.value)"></div>
                         <div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="linewidth-slider" min="0.5" max="10" step="0.5" value="3" oninput="updateLineWidth(this.value)"><input type="number" id="linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateLineWidthFromInput(this.value)"></div>
                         <button class="action-btn" onclick="toggleFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button>
+                        <button class="action-btn" id="varna-download-btn" style="background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); color: white; font-weight: bold; border: 2px solid #FF6B6B; display: none;">🎨 下载VARNA结构图</button>
                     </div>
                     <div id="structure-canvas"></div>
                 </div>
@@ -1298,9 +1351,65 @@
                     <h4>🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
                     <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高' : 'Brighter color indicates higher pairing probability'}</p>
                     <div id="heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
-                </div>`;
+                </div>
+                <div id="varna-container" style="display:none;margin-top:15px;padding:15px;border:2px solid var(--accent-green);border-radius:12px;background:var(--bg-canvas);"></div>
+                <div id="varna-downloads" style="display:none;" class="varna-controls"></div>`;
             drawStructureForce(data.sequence, data.mfe_structure, data.pairs_matrix);
             drawHeatmap(data.sequence, data.pairs_matrix);
+            
+            // 显示VARNA下载按钮
+            const varnaBtn = document.getElementById('varna-download-btn');
+            if (varnaBtn && varnaAvailable) {
+                varnaBtn.style.display = 'inline-block';
+                varnaBtn.onclick = async function() {
+                    const originalText = this.textContent;
+                    this.textContent = '⏳ 渲染中...';
+                    this.disabled = true;
+                    
+                    try {
+                        const response = await fetch('/api/visualize/varna', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                sequence: data.sequence,
+                                structure: data.mfe_structure,
+                                pairs_matrix: data.pairs_matrix,
+                                show_probability: true
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // 下载SVG
+                            const blob = new Blob([result.svg], {type: 'image/svg+xml'});
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'varna_structure.svg';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            
+                            this.textContent = '✅ 已下载';
+                            setTimeout(() => {
+                                this.textContent = originalText;
+                                this.disabled = false;
+                            }, 2000);
+                        } else {
+                            throw new Error(result.error);
+                        }
+                    } catch (error) {
+                        console.error('VARNA错误:', error);
+                        this.textContent = '❌ 失败';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                            this.disabled = false;
+                        }, 2000);
+                    }
+                };
+            }
         }
 
         // 绘制配对概率热力图
@@ -1466,7 +1575,7 @@
 
         function showSuboptDetail(data) {
             const detail = document.getElementById('complex-detail-view');
-            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${i18n[currentLang].structName} #${data.index}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.structure}</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].probability}</span><span class="result-value" style="color: var(--accent-green);">${(data.probability * 100).toFixed(4)}%</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].energy}</span><span class="result-value" style="color: var(--accent-green);">${data.energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><button class="action-btn" id="detail-lock-btn" onclick="toggleLockLayout()">🔒 ${currentLang === 'zh' ? '确定布局' : 'Lock'}</button><button class="action-btn" id="detail-auto-layout-btn" onclick="toggleDetailAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button><button class="action-btn" id="detail-compact-btn" onclick="toggleDetailCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button><button class="action-btn" id="detail-multichain-btn" onclick="toggleMultiChainMode()">🔗 ${currentLang === 'zh' ? '多链模式' : 'Multi-Chain'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="-1" max="1" step="0.05" value="0" oninput="updateDetailTensionFromSlider(this.value)"><input type="number" id="detail-tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailTensionFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div><button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button><button class="action-btn" onclick="rotateStructure()">🔃 ${currentLang === 'zh' ? '旋转' : 'Rotate'}</button></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
+            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${i18n[currentLang].structName} #${data.index}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.structure}</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].probability}</span><span class="result-value" style="color: var(--accent-green);">${(data.probability * 100).toFixed(4)}%</span></div><div class="result-row"><span class="result-label">${i18n[currentLang].energy}</span><span class="result-value" style="color: var(--accent-green);">${data.energy.toFixed(2)} kcal/mol</span></div></div><div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><button class="action-btn" id="detail-lock-btn" onclick="toggleLockLayout()">🔒 ${currentLang === 'zh' ? '确定布局' : 'Lock'}</button><button class="action-btn" id="detail-auto-layout-btn" onclick="toggleDetailAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button><button class="action-btn" id="detail-compact-btn" onclick="toggleDetailCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button><button class="action-btn" id="detail-multichain-btn" onclick="toggleMultiChainMode()">🔗 ${currentLang === 'zh' ? '多链模式' : 'Multi-Chain'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="-1" max="1" step="0.05" value="0" oninput="updateDetailTensionFromSlider(this.value)"><input type="number" id="detail-tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailTensionFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div><button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button><button class="action-btn" onclick="rotateStructure()">🔃 ${currentLang === 'zh' ? '旋转' : 'Rotate'}</button><button class="action-btn" onclick="downloadDetailVarna()" style="background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); color: white; font-weight: bold; border: 2px solid #FF6B6B; margin-left: 5px;">🎨 下载VARNA结构图</button></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div><div id="detail-varna-container" style="display:none;margin-top:15px;padding:15px;border:2px solid var(--accent-green);border-radius:12px;background:var(--bg-canvas);"></div></div>`;
 
             const s = data.sequence, st = data.structure;
             // 为次优结构创建一个简化的配对矩阵（基于结构字符串）
@@ -2009,14 +2118,20 @@
                 }
                 colorPickersHtml += `</div>`;
             }
-            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${data.name}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.mfe_structure}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '浓度' : 'Conc'}</span><span class="result-value" style="color: var(--accent-green);">${(data.concentration * 1e9).toFixed(4)} nM</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量' : 'Energy'}</span><span class="result-value" style="color: var(--accent-green);">${data.mfe_energy.toFixed(2)} kcal/mol</span></div></div>${colorPickersHtml}<div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><button class="action-btn" id="detail-lock-btn" onclick="toggleLockLayout()">🔒 ${currentLang === 'zh' ? '确定布局' : 'Lock'}</button><button class="action-btn" id="detail-auto-layout-btn" onclick="toggleDetailAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button><button class="action-btn" id="detail-compact-btn" onclick="toggleDetailCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button><button class="action-btn" id="detail-multichain-btn" onclick="toggleMultiChainMode()">🔗 ${currentLang === 'zh' ? '多链模式' : 'Multi-Chain'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="-1" max="1" step="0.05" value="0" oninput="updateDetailTensionFromSlider(this.value)"><input type="number" id="detail-tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailTensionFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div><button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button><button class="action-btn" onclick="rotateStructure()">🔃 ${currentLang === 'zh' ? '旋转' : 'Rotate'}</button></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div></div>`;
+            detail.innerHTML = `<div class="structure-viz" style="border: 2px solid var(--accent-blue);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h4 style="margin: 0;">🧬 ${data.name}</h4><button class="action-btn" onclick="closeComplexDetail()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button></div><div class="result-card" style="margin-bottom: 10px;"><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break: break-all;">${data.sequence}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构' : 'Structure'}</span><span class="result-value" style="word-break: break-all;">${data.mfe_structure}</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '浓度' : 'Conc'}</span><span class="result-value" style="color: var(--accent-green);">${(data.concentration * 1e9).toFixed(4)} nM</span></div><div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量' : 'Energy'}</span><span class="result-value" style="color: var(--accent-green);">${data.mfe_energy.toFixed(2)} kcal/mol</span></div></div>${colorPickersHtml}<div id="detail-base-info-panel"></div><div class="viz-controls"><button class="action-btn" onclick="fixDetailLayout()">📌 ${currentLang === 'zh' ? '固定布局' : 'Fix Layout'}</button><button class="action-btn" id="detail-lock-btn" onclick="toggleLockLayout()">🔒 ${currentLang === 'zh' ? '确定布局' : 'Lock'}</button><button class="action-btn" id="detail-auto-layout-btn" onclick="toggleDetailAutoLayout()">🔄 ${currentLang === 'zh' ? '自动布局' : 'Auto Layout'}</button><button class="action-btn" id="detail-compact-btn" onclick="toggleDetailCompactLayout()">📦 ${currentLang === 'zh' ? '紧凑布局' : 'Compact'}</button><button class="action-btn" id="detail-multichain-btn" onclick="toggleMultiChainMode()">🔗 ${currentLang === 'zh' ? '多链模式' : 'Multi-Chain'}</button><div class="viz-control-group"><label>${currentLang === 'zh' ? '松紧' : 'Tension'}:</label><input type="range" id="detail-tension" min="-1" max="1" step="0.05" value="0" oninput="updateDetailTensionFromSlider(this.value)"><input type="number" id="detail-tension-input" min="0.1" max="10" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailTensionFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div><div class="viz-control-group"><label>${currentLang === 'zh' ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div><button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${currentLang === 'zh' ? '全屏' : 'Fullscreen'}</button><button class="action-btn" onclick="rotateStructure()">🔃 ${currentLang === 'zh' ? '旋转' : 'Rotate'}</button><button class="action-btn" onclick="downloadDetailVarna()" style="background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); color: white; font-weight: bold; border: 2px solid #FF6B6B; margin-left: 5px;">🎨 下载VARNA结构图</button></div><div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div><div id="detail-varna-container" style="display:none;margin-top:15px;padding:15px;border:2px solid var(--accent-green);border-radius:12px;background:var(--bg-canvas);"></div></div>`;
 
             const s = data.sequence.replace(/\+/g, ''), st = data.mfe_structure.replace(/\+/g, '');
             const matrix = Array(s.length).fill(null).map(() => Array(s.length).fill(0));
             const stack = [];
             for (let i = 0; i < st.length; i++) { if (st[i] === '(') stack.push(i); else if (st[i] === ')') { const j = stack.pop(); matrix[i][j] = matrix[j][i] = 1; } }
-            // 保存原始序列（包含+）用于多链识别
-            currentDetailStructureData = { sequence: data.sequence, cleanSequence: s, structure: st, pairsMatrix: matrix };
+            // 保存原始序列和结构（包含+）用于VARNA渲染
+            currentDetailStructureData = { 
+                sequence: data.sequence,           // 原始序列（包含+）
+                mfeStructure: data.mfe_structure,  // 原始结构（包含+）
+                cleanSequence: s,                  // 清理后的序列（无+）
+                structure: st,                     // 清理后的结构（无+）
+                pairsMatrix: matrix 
+            };
 
             // 使用 requestAnimationFrame 确保容器已渲染
             requestAnimationFrame(() => {
@@ -2024,7 +2139,78 @@
                 const parentWidth = canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800;
                 const canvasWidth = canvasEl.clientWidth || parentWidth;
                 drawStructureForce(data.sequence, st, matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+                
+                // 为多链分析添加配对概率矩阵
+                if (data.sequence.includes('+')) {
+                    addDetailHeatmap(s, matrix);
+                }
             });
+        }
+        
+        // 为详情页添加配对概率矩阵
+        function addDetailHeatmap(sequence, matrix) {
+            const container = document.getElementById('detail-varna-container');
+            if (!container) return;
+            
+            container.style.display = 'block';
+            container.innerHTML = `
+                <h4 style="margin: 0 0 10px 0;">🌡️ 配对概率矩阵</h4>
+                <div id="detail-heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
+            `;
+            
+            const heatmapContainer = document.getElementById('detail-heatmap-canvas');
+            drawDetailHeatmap(sequence, matrix, heatmapContainer);
+        }
+        
+        // 绘制详情页配对概率矩阵
+        function drawDetailHeatmap(sequence, matrix, container) {
+            const n = sequence.length;
+            const cellSize = Math.min(20, Math.max(10, 400 / n));
+            
+            const svg = d3.select(container).append('svg')
+                .attr('width', n * cellSize + 60)
+                .attr('height', n * cellSize + 60);
+            
+            const g = svg.append('g')
+                .attr('transform', 'translate(30, 30)');
+            
+            const colorScale = d3.scaleSequential(d3.interpolateViridis)
+                .domain([0, 1]);
+            
+            // 绘制单元格
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    g.append('rect')
+                        .attr('x', j * cellSize)
+                        .attr('y', i * cellSize)
+                        .attr('width', cellSize - 1)
+                        .attr('height', cellSize - 1)
+                        .attr('fill', colorScale(matrix[i][j]))
+                        .attr('stroke', '#fff')
+                        .attr('stroke-width', 0.5);
+                }
+            }
+            
+            // 添加轴标签（仅当序列不太长时）
+            if (n <= 50) {
+                for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 10))) {
+                    g.append('text')
+                        .attr('x', i * cellSize + cellSize / 2)
+                        .attr('y', -5)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '10px')
+                        .attr('fill', '#666')
+                        .text(i + 1);
+                    
+                    g.append('text')
+                        .attr('x', -5)
+                        .attr('y', i * cellSize + cellSize / 2 + 3)
+                        .attr('text-anchor', 'end')
+                        .attr('font-size', '10px')
+                        .attr('fill', '#666')
+                        .text(i + 1);
+                }
+            }
         }
 
         function fixDetailLayout() {
@@ -2456,13 +2642,172 @@
             document.getElementById('color-high').addEventListener('input', onColorChange);
             updateGradientPreview();
         });
+
+        // ==================== VARNA集成 ====================
+        let varnaAvailable = false;
+
+        // 检查VARNA状态
+        async function checkVarnaStatus() {
+            try {
+                const response = await fetch('/api/varna/status');
+                const data = await response.json();
+                varnaAvailable = data.available;
+                console.log('VARNA状态:', varnaAvailable ? '可用' : '不可用');
+            } catch (error) {
+                console.error('检查VARNA状态失败:', error);
+                varnaAvailable = false;
+            }
+        }
+
+        // 详情页VARNA下载函数
+        async function downloadDetailVarna() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ 渲染中...';
+            btn.disabled = true;
+            
+            try {
+                // 对于多链结构，需要将+转换为&（VARNA格式）
+                // 重要：序列和结构中的+位置必须一一对应！
+                const originalSeq = currentDetailStructureData.sequence || currentDetailStructureData.cleanSequence;
+                const originalStruct = currentDetailStructureData.mfeStructure || currentDetailStructureData.structure;
+                const varnaSequence = originalSeq.replace(/\+/g, '&');
+                const varnaStructure = originalStruct.replace(/\+/g, '&');
+                
+                const response = await fetch('/api/visualize/varna', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sequence: varnaSequence,  // 使用VARNA格式的多链序列
+                        structure: varnaStructure,  // 使用VARNA格式的多链结构
+                        pairs_matrix: currentDetailStructureData.pairsMatrix,  // 传递配对概率矩阵
+                        show_probability: true  // 启用配对概率着色
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 下载SVG
+                    const blob = new Blob([result.svg], {type: 'image/svg+xml'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'varna_structure.svg';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    btn.textContent = '✅ 已下载';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                    
+                    // 显示VARNA引用提示
+                    showVarnaCitation();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('VARNA错误:', error);
+                btn.textContent = '❌ 失败';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // 显示VARNA引用提示
+        function showVarnaCitation() {
+            const modal = document.createElement('div');
+            modal.id = 'varna-citation-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: var(--bg-card);
+                    padding: 30px;
+                    border-radius: 12px;
+                    max-width: 600px;
+                    width: 90%;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                ">
+                    <h3 style="margin: 0 0 15px 0; color: var(--accent-blue); font-size: 1.3em;">
+                        📚 VARNA 引用提示
+                    </h3>
+                    <p style="margin: 0 0 15px 0; color: var(--text-primary); line-height: 1.6;">
+                        如果您要将此图片用于论文发表，请引用以下文献：
+                    </p>
+                    <div style="
+                        background: var(--bg-canvas);
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin-bottom: 15px;
+                        border-left: 4px solid var(--accent-blue);
+                    ">
+                        <p style="margin: 0 0 8px 0; font-weight: bold; color: var(--text-primary);">
+                            VARNA: Interactive drawing and editing of the RNA secondary structure
+                        </p>
+                        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9em;">
+                            Kévin Darty, Alain Denise and Yann Ponty<br>
+                            Bioinformatics, pp. 1974-1975, Vol. 25, no. 15, 2009
+                        </p>
+                    </div>
+                    <p style="margin: 0 0 15px 0; color: var(--text-primary);">
+                        <strong>VARNA 官方网站：</strong><br>
+                        <a href="https://varna.lisn.upsaclay.fr/" target="_blank" style="color: var(--accent-blue); word-break: break-all;">
+                            https://varna.lisn.upsaclay.fr/
+                        </a>
+                    </p>
+                    <button onclick="document.getElementById('varna-citation-modal').remove()" style="
+                        width: 100%;
+                        padding: 10px;
+                        background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+                        border: none;
+                        border-radius: 6px;
+                        color: white;
+                        font-weight: bold;
+                        cursor: pointer;
+                        font-size: 1em;
+                    ">
+                        ${currentLang === 'zh' ? '我知道了' : 'Got it'}
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // 页面加载时检查VARNA状态
+        checkVarnaStatus();
     </script>
 
     <!-- 全屏覆盖层 -->
     <div class="modal-overlay" id="fullscreen-overlay" style="background: var(--bg-canvas);">
         <div style="position: absolute; top: 0; left: 0; right: 0; padding: 10px 15px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
             <h3 style="color: var(--accent-blue);">🧬 NUPACK</h3>
-            <button class="action-btn" onclick="toggleFullscreen()">✕ ${currentLang === 'zh' ? '关闭' : 'Close'}</button>
+            <button class="action-btn" onclick="toggleFullscreen()">✕ 关闭</button>
         </div>
         <div style="position: absolute; top: 50px; left: 0; right: 0; bottom: 0;">
             <div id="fullscreen-canvas"></div>

@@ -8,6 +8,36 @@ A localized web interface for nucleic acid analysis based on Flask + NUPACK, pro
 
 **[中文文档 / Chinese Documentation](README.md)**
 
+## 🆕 v1.4.0 New Features
+
+### 🎨 VARNA Structure Export (Major Update)
+**Description**: Integration of VARNA engine for publication-quality RNA/DNA secondary structure visualization.
+
+**Features**:
+- ✅ High-quality vector graphics (SVG format)
+- ✅ Pairing probability gradient coloring
+- ✅ Multi-chain structure support (automatic separation display)
+- ✅ Citation prompt (for paper publication)
+
+**Usage**:
+1. Run structure analysis (single or multi-chain)
+2. Click the orange-red **"🎨 Download VARNA Structure"** button
+3. SVG file is automatically downloaded, ready for publication
+
+**Citation**:
+> VARNA: Interactive drawing and editing of the RNA secondary structure  
+> Kévin Darty, Alain Denise and Yann Ponty  
+> Bioinformatics, pp. 1974-1975, Vol. 25, no. 15, 2009
+
+### 📦 Other Updates
+- 🖥️ **Desktop Launcher** - Double-click desktop icon to start
+- 🔄 **Auto Browser Launch** - Automatically opens control panel on startup
+- ☕ **Java Auto-Install** - Automatically detects and installs OpenJDK 11
+- 📐 **Layout Optimization** - Panel ratio changed to 1:2, wider input box
+- 🔧 **Multi-Chain VARNA Fix** - Correct handling of multi-chain structure separators
+
+---
+
 ## 🆕 v1.3.0 New Features
 
 ### 🔄 Auto Layout (Major Update)

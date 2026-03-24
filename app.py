@@ -9,12 +9,51 @@ import json
 import os
 import subprocess
 from datetime import datetime
+import tempfile
+import base64
+from flask_cors import CORS
+
+# VARNA相关导入
+try:
+    import varnaapi
+    from varnaapi import Structure
+    VARNA_API_AVAILABLE = True
+except ImportError:
+    VARNA_API_AVAILABLE = False
+    print("⚠️  varnaapi未安装，VARNA功能将不可用")
 
 app = Flask(__name__)
+CORS(app)  # 启用CORS支持
 
 # 项目保存目录
 PROJECTS_DIR = os.path.expanduser('~/nupack-projects')
 os.makedirs(PROJECTS_DIR, exist_ok=True)
+
+# VARNA配置
+VARNA_JAR = os.path.join(os.path.dirname(__file__), 'lib', 'VARNAv3-93.jar')
+VARNA_AVAILABLE = False
+
+def init_varna():
+    """初始化VARNA"""
+    global VARNA_AVAILABLE
+    if not VARNA_API_AVAILABLE:
+        return False
+    
+    if os.path.exists(VARNA_JAR):
+        try:
+            varnaapi.set_VARNA(VARNA_JAR)
+            VARNA_AVAILABLE = True
+            print(f"✅ VARNA已加载: {VARNA_JAR}")
+            return True
+        except Exception as e:
+            print(f"⚠️  VARNA加载失败: {e}")
+            return False
+    else:
+        print(f"⚠️  VARNA jar未找到: {VARNA_JAR}")
+        return False
+
+# 初始化VARNA
+init_varna()
 
 # ==================== 页面路由 ====================
 
@@ -22,6 +61,112 @@ os.makedirs(PROJECTS_DIR, exist_ok=True)
 def index():
     """主页面"""
     return render_template('index.html')
+
+@app.route('/test/varna')
+def test_varna_page():
+    """VARNA测试页面"""
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>VARNA独立测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; margin: 5px; }
+        button:hover { background: #45a049; }
+        #output { margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        #varna-result { margin-top: 20px; border: 2px solid #4CAF50; padding: 15px; border-radius: 8px; background: white; }
+    </style>
+</head>
+<body>
+    <h1>🧪 VARNA独立测试</h1>
+    
+    <div>
+        <button onclick="testAPI()">1. 测试API状态</button>
+        <button onclick="testRender()">2. 测试VARNA渲染</button>
+    </div>
+    
+    <div id="output"></div>
+    <div id="varna-result"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        const result = document.getElementById('varna-result');
+        
+        function log(msg, isError = false) {
+            const p = document.createElement('p');
+            p.className = isError ? 'error' : 'success';
+            p.textContent = msg;
+            output.appendChild(p);
+            console.log(msg);
+        }
+        
+        async function testAPI() {
+            output.innerHTML = '';
+            log('🔍 检查VARNA API...');
+            
+            try {
+                const response = await fetch('/api/varna/status');
+                const data = await response.json();
+                
+                log('✅ API响应: ' + JSON.stringify(data));
+                
+                if (data.available) {
+                    log('✅ VARNA可用！');
+                } else {
+                    log('❌ VARNA不可用', true);
+                    log('jar路径: ' + data.jar_path, true);
+                }
+            } catch (error) {
+                log('❌ 请求失败: ' + error.message, true);
+            }
+        }
+        
+        async function testRender() {
+            output.innerHTML = '';
+            result.innerHTML = '<p style="color: #666;">渲染中...</p>';
+            log('🎨 测试VARNA渲染...');
+            
+            try {
+                const response = await fetch('/api/visualize/varna', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sequence: 'GCGCAAAAGCGC',
+                        structure: '((((....))))',
+                        show_probability: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    log('✅ SVG生成成功！');
+                    log('SVG长度: ' + data.svg.length + ' 字符');
+                    log('布局: ' + data.info.layout);
+                    
+                    result.innerHTML = data.svg;
+                } else {
+                    log('❌ 渲染失败: ' + data.error, true);
+                    result.innerHTML = '';
+                }
+            } catch (error) {
+                log('❌ 请求失败: ' + error.message, true);
+                result.innerHTML = '';
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.onload = () => {
+            log('页面加载完成，点击按钮测试VARNA功能');
+        };
+    </script>
+</body>
+</html>
+    '''
 
 # ==================== API 路由 ====================
 
@@ -641,6 +786,141 @@ def create_notebook(data):
         "nbformat_minor": 4
     }
     return notebook
+
+
+# ==================== VARNA可视化API ====================
+
+@app.route('/api/varna/status', methods=['GET'])
+def varna_status():
+    """检查VARNA是否可用"""
+    return jsonify({
+        'available': VARNA_AVAILABLE,
+        'jar_path': VARNA_JAR if VARNA_AVAILABLE else None,
+        'api_available': VARNA_API_AVAILABLE
+    })
+
+@app.route('/api/visualize/varna', methods=['POST'])
+def visualize_varna():
+    """使用VARNA生成结构可视化SVG
+    
+    请求参数:
+    - sequence: 序列 (多链用+分隔)
+    - structure: 点括号结构 (多链用+分隔)
+    - pairs_matrix: 配对概率矩阵 (可选)
+    - show_probability: 是否显示配对概率着色 (默认True)
+    - layout: 布局算法 (naview, radiate, circular, linear)
+    """
+    try:
+        if not VARNA_AVAILABLE:
+            return jsonify({
+                'error': 'VARNA不可用。请确保已安装Java并下载VARNA jar文件。',
+                'install_instructions': {
+                    'java': 'sudo apt install openjdk-11-jre',
+                    'varna': 'mkdir -p lib && cd lib && wget https://varna.lri.fr/bin/VARNAv3-93.jar'
+                }
+            }), 503
+        
+        data = request.json
+        sequence = data.get('sequence', '').upper().strip()
+        structure = data.get('structure', '').strip()
+        pairs_matrix = data.get('pairs_matrix', None)
+        
+        # 可选参数
+        show_probability = data.get('show_probability', True)
+        layout = data.get('layout', 'naview')
+        
+        # 验证输入
+        if not sequence or not structure:
+            return jsonify({'error': '序列和结构不能为空'}), 400
+        
+        # 处理多链序列
+        # NUPACK格式: "SEQ1+SEQ2" → VARNA格式: "SEQ1&SEQ2"
+        seq_varna = sequence.replace('+', '&')
+        struct_varna = structure.replace('+', '&')
+        
+        # 用于计算的纯净序列（无分隔符，包括+和&）
+        seq_calc = sequence.replace('+', '').replace('&', '')
+        struct_calc = structure.replace('+', '').replace('&', '')
+        
+        # 创建VARNA结构对象
+        try:
+            v = Structure(
+                structure=struct_varna,
+                sequence=seq_varna
+            )
+        except Exception as e:
+            return jsonify({'error': f'VARNA结构创建失败: {str(e)}'}), 400
+        
+        # 配对概率着色
+        if show_probability and pairs_matrix:
+            try:
+                import numpy as np
+                P = np.array(pairs_matrix)
+                pair_prob = np.zeros(len(seq_calc))
+                
+                # 解析配对关系
+                stack = []
+                for i, c in enumerate(struct_calc):
+                    if i >= len(seq_calc):
+                        break
+                    if c == '(':
+                        stack.append(i)
+                    elif c == ')':
+                        if stack:
+                            j = stack.pop()
+                            if i < P.shape[0] and j < P.shape[1]:
+                                prob = float(P[i, j])
+                                pair_prob[i] = prob
+                                pair_prob[j] = prob
+                
+                # 添加颜色映射
+                v.add_colormap(pair_prob.tolist())
+            except Exception as e:
+                print(f"⚠️  配对概率着色失败: {e}")
+        
+        # 生成SVG
+        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False, mode='w') as tmp:
+            output_path = tmp.name
+        
+        v.savefig(output=output_path)
+        
+        # 读取SVG
+        with open(output_path, 'r', encoding='utf-8') as f:
+            svg_content = f.read()
+        
+        # 清理临时文件
+        try:
+            os.unlink(output_path)
+        except:
+            pass
+        
+        # 修复XML格式：转义所有未转义的&字符（除了已转义的）
+        # 这是因为VARNA可能直接输出&而不是&amp;
+        svg_content = svg_content.replace('&', '&amp;')
+        svg_content = svg_content.replace('&amp;amp;', '&amp;')  # 避免双重转义
+        svg_content = svg_content.replace('&amp;lt;', '&lt;')  # 恢复其他XML实体
+        svg_content = svg_content.replace('&amp;gt;', '&gt;')
+        svg_content = svg_content.replace('&amp;quot;', '&quot;')
+        svg_content = svg_content.replace('&amp;apos;', '&apos;')
+        
+        return jsonify({
+            'success': True,
+            'svg': svg_content,
+            'svg_base64': base64.b64encode(svg_content.encode()).decode(),
+            'info': {
+                'sequence': seq_varna,  # 返回转换后的VARNA格式序列
+                'structure': struct_varna,  # 返回转换后的VARNA格式结构
+                'original_sequence': sequence,  # 保留原始输入
+                'original_structure': structure,
+                'layout': layout,
+                'chains': len(seq_varna.split('&'))  # 根据&分隔符计算链数
+            }
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 # ==================== 启动 ====================

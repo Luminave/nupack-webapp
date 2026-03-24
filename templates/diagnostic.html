@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>诊断页面</title>
+</head>
+<body>
+    <h1>VARNA诊断</h1>
+    <div id="status">正在检查...</div>
+    <div id="buttons"></div>
+    
+    <script>
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/varna/status');
+                const data = await response.json();
+                document.getElementById('status').innerHTML = `
+                    <p>VARNA状态: ${data.available ? '✅ 可用' : '❌ 不可用'}</p>
+                    <p>JAR路径: ${data.jar_path}</p>
+                `;
+                
+                if (data.available) {
+                    document.getElementById('buttons').innerHTML = `
+                        <button onclick="testSingle()">测试单链</button>
+                        <button onclick="testMulti()">测试多链</button>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('status').innerHTML = '<p>❌ 错误: ' + e.message + '</p>';
+            }
+        }
+        
+        async function testSingle() {
+            try {
+                const response = await fetch('/api/visualize/varna', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sequence: 'GCGCAAAAGCGC',
+                        structure: '((((....))))'
+                    })
+                });
+                const data = await response.json();
+                alert('单链测试: ' + (data.success ? '✅ 成功' : '❌ 失败: ' + data.error));
+            } catch (e) {
+                alert('错误: ' + e.message);
+            }
+        }
+        
+        async function testMulti() {
+            try {
+                const response = await fetch('/api/visualize/varna', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sequence: 'ACGT+TGCA',
+                        structure: '....+....'
+                    })
+                });
+                const data = await response.json();
+                alert('多链测试: ' + (data.success ? '✅ 成功' : '❌ 失败: ' + data.error));
+            } catch (e) {
+                alert('错误: ' + e.message);
+            }
+        }
+        
+        checkStatus();
+    </script>
+</body>
+</html>

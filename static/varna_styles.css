@@ -1,0 +1,336 @@
+/* VARNA集成样式 */
+
+/* VARNA容器 */
+#varna-container {
+    margin-top: 20px;
+    padding: 15px;
+    border: 2px solid #4CAF50;
+    border-radius: 12px;
+    background: white;
+    overflow: auto;
+    max-height: 600px;
+    position: relative;
+}
+
+#varna-container.hidden {
+    display: none;
+}
+
+/* VARNA SVG样式 */
+#varna-container svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+    transition: transform 0.2s ease;
+}
+
+/* VARNA控制按钮容器 */
+.varna-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.varna-controls button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.varna-controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* VARNA模式选择器 */
+.varna-mode-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.varna-mode-selector label {
+    font-weight: 600;
+    color: #333;
+}
+
+.varna-mode-selector select {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* VARNA选项面板 */
+.varna-options {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.varna-options h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.varna-options .option-row {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    gap: 10px;
+}
+
+.varna-options label {
+    min-width: 120px;
+    color: #666;
+}
+
+.varna-options select,
+.varna-options input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* 加载状态 */
+.varna-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #666;
+}
+
+.varna-loading::before {
+    content: "🎨";
+    font-size: 24px;
+    margin-right: 10px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 错误消息 */
+.varna-error {
+    background: #ffebee;
+    border: 1px solid #ef5350;
+    border-radius: 8px;
+    padding: 15px;
+    color: #c62828;
+}
+
+.varna-error h4 {
+    margin: 0 0 10px 0;
+    color: #c62828;
+}
+
+.varna-error p {
+    margin: 5px 0;
+}
+
+.varna-error .install-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ffcdd2;
+}
+
+/* VARNA vs D3 对比面板 */
+.visualization-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.viz-panel {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.viz-panel-header {
+    background: #f5f5f5;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+}
+
+.viz-panel-content {
+    padding: 15px;
+    min-height: 300px;
+}
+
+/* VARNA信息面板 */
+.varna-info {
+    background: #e3f2fd;
+    border-left: 4px solid #2196F3;
+    padding: 12px 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+}
+
+.varna-info h5 {
+    margin: 0 0 8px 0;
+    color: #1976D2;
+}
+
+.varna-info ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.varna-info li {
+    margin: 4px 0;
+    color: #555;
+}
+
+/* VARNA渲染按钮样式 */
+.btn-varna {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-varna:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-varna:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 深色主题支持 */
+@media (prefers-color-scheme: dark) {
+    #varna-container {
+        background: #2d2d2d;
+        border-color: #4CAF50;
+    }
+    
+    .varna-mode-selector {
+        background: #3d3d3d;
+    }
+    
+    .varna-mode-selector label {
+        color: #e0e0e0;
+    }
+    
+    .varna-options {
+        background: #3d3d3d;
+        border-color: #555;
+    }
+    
+    .varna-options h4 {
+        color: #e0e0e0;
+    }
+    
+    .varna-options label {
+        color: #aaa;
+    }
+    
+    .varna-info {
+        background: #1a3a52;
+        border-left-color: #42A5F5;
+    }
+    
+    .varna-info h5 {
+        color: #64B5F6;
+    }
+    
+    .varna-info li {
+        color: #bbb;
+    }
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .varna-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .varna-controls button {
+        width: 100%;
+    }
+    
+    .visualization-comparison {
+        grid-template-columns: 1fr;
+    }
+    
+    .varna-options .option-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .varna-options label {
+        min-width: auto;
+    }
+}
+
+/* VARNA缩放控制 */
+.varna-zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 5px;
+    background: rgba(255,255,255,0.9);
+    padding: 5px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.varna-zoom-controls button {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.varna-zoom-controls button:hover {
+    background: #f0f0f0;
+}
+
+/* 工具提示 */
+.varna-tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 200px;
+}
