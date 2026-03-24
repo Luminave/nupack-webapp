@@ -8,6 +8,8 @@
 
 一个基于 Flask + NUPACK 的本地化核酸分析网页界面，提供直观的可视化操作体验。
 
+![NUPACK Web界面](static/images/screenshot.png)
+
 ## 🆕 v1.4.0 新功能
 
 ### 🎨 VARNA结构导出（重点更新）
