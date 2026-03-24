@@ -39,13 +39,15 @@ else
     echo "    ⚠️  Java 未安装，正在安装 OpenJDK..."
     if command -v apt-get &> /dev/null; then
         sudo apt-get update -qq
-        sudo apt-get install -y openjdk-11-jre-headless
+        # 安装完整版JRE（包含GUI库，VARNA需要）
+        sudo apt-get install -y openjdk-11-jre
         echo "    ✅ OpenJDK 11 已安装"
     elif command -v yum &> /dev/null; then
-        sudo yum install -y java-11-openjdk-headless
+        sudo yum install -y java-11-openjdk
         echo "    ✅ OpenJDK 11 已安装"
     else
         echo "    ❌ 无法自动安装 Java，请手动安装 Java Runtime Environment"
+        echo "    注意：必须安装完整版（非headless），VARNA需要图形库支持"
         echo "    VARNA 功能将无法使用"
     fi
 fi
