@@ -13,6 +13,9 @@ import tempfile
 import base64
 from flask_cors import CORS
 
+APP_VERSION = '1.5.0'
+GITHUB_REPO = 'Luminave/nupack-webapp'
+
 # VARNA相关导入
 try:
     import varnaapi
@@ -61,6 +64,81 @@ init_varna()
 def index():
     """主页面"""
     return render_template('index.html')
+
+@app.route('/tutorial')
+@app.route('/tutorial/<path:filepath>')
+def tutorial_page(filepath=None):
+    """教程文档页面"""
+    titles = {
+        'guide.md': '📘 NUPACK Web App 新手指南',
+        'deploy.md': '📖 NUPACK 开发环境部署教程',
+        'index.md': '📖 NUPACK 教程',
+    }
+    if filepath is None:
+        filepath = 'guide.md'
+    title = titles.get(filepath, '📖 NUPACK 教程')
+    return render_template('tutorial.html', filepath=filepath, title=title)
+
+@app.route('/tutorial/raw/<path:filepath>')
+def tutorial_raw(filepath):
+    """返回教程原始文件（markdown 或图片）"""
+    import mimetypes
+    full_path = os.path.join(app.root_path, 'tutorial', filepath)
+    if not os.path.isfile(full_path):
+        return 'Not Found', 404
+    mime = mimetypes.guess_type(full_path)[0] or 'application/octet-stream'
+    return send_file(full_path, mimetype=mime)
+
+@app.route('/api/version')
+def get_version():
+    return jsonify({'version': APP_VERSION, 'repo': GITHUB_REPO})
+
+@app.route('/api/check-update')
+def check_update():
+    import urllib.request
+    try:
+        # 先尝试 releases/latest
+        url = f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest'
+        req = urllib.request.Request(url, headers={'User-Agent': 'nupack-webapp'})
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+            latest = data.get('tag_name', '').lstrip('vV')
+            html_url = data.get('html_url', f'https://github.com/{GITHUB_REPO}/releases')
+        except:
+            # 没有 releases，尝试获取最新 tag
+            url2 = f'https://api.github.com/repos/{GITHUB_REPO}/tags'
+            req2 = urllib.request.Request(url2, headers={'User-Agent': 'nupack-webapp'})
+            with urllib.request.urlopen(req2, timeout=10) as resp:
+                tags = json.loads(resp.read())
+            if not tags:
+                return jsonify({'update': False, 'message': '仓库中暂无版本标签', 'url': f'https://github.com/{GITHUB_REPO}'})
+            latest = tags[0].get('name', '').lstrip('vV')
+            html_url = f'https://github.com/{GITHUB_REPO}/releases'
+        if not latest:
+            return jsonify({'update': False, 'message': '无法获取远程版本信息', 'url': f'https://github.com/{GITHUB_REPO}/releases'})
+        # 简单版本号比较
+        def ver_tuple(v):
+            parts = []
+            for p in v.split('.'):
+                try: parts.append(int(p))
+                except: parts.append(0)
+            return tuple(parts + [0] * (3 - len(parts)))
+        has_update = ver_tuple(latest) > ver_tuple(APP_VERSION)
+        return jsonify({
+            'update': has_update,
+            'current': APP_VERSION,
+            'latest': latest,
+            'url': html_url,
+            'message': f'发现新版本 v{latest}！' if has_update else '当前已是最新版本'
+        })
+    except Exception as e:
+        return jsonify({
+            'update': False,
+            'error': True,
+            'message': f'无法访问 GitHub: {str(e)}',
+            'url': f'https://github.com/{GITHUB_REPO}/releases'
+        })
 
 @app.route('/test/varna')
 def test_varna_page():
@@ -256,7 +334,51 @@ def analyze_subopt():
         comp = Complex([strand], name='Input')
         
         # 使用 subopt 获取次优结构
-        subopt_result = subopt(comp, energy_gap, model)
+        # energy_gap < 0 表示自动模式，根据序列长度选择合适的初始 gap
+        auto_mode = energy_gap < 0
+        requested_gap = energy_gap
+        if auto_mode:
+            if len(sequence) <= 30:
+                energy_gap = 5.0
+            elif len(sequence) <= 50:
+                energy_gap = 3.0
+            elif len(sequence) <= 80:
+                energy_gap = 2.0
+            else:
+                energy_gap = 1.5
+        
+        subopt_result = None
+        subopt_warning = None
+        actual_gap = energy_gap
+        retry_gaps = [energy_gap, 2.0, 1.0, 0.5]
+        # 去重，保留 >= 0.5 的
+        seen = set()
+        retry_gaps = [g for g in retry_gaps if g >= 0.5 and not (g in seen or seen.add(g))]
+        for try_gap in retry_gaps:
+            try:
+                subopt_result = subopt(comp, try_gap, model)
+                actual_gap = try_gap
+                if try_gap < energy_gap:
+                    if auto_mode:
+                        subopt_warning = f'序列较长，已自动使用 {try_gap} kcal/mol 的能量窗口'
+                    else:
+                        subopt_warning = f'序列较长，已自动将能量窗口从 {energy_gap} kcal/mol 缩小到 {try_gap} kcal/mol'
+                break
+            except Exception as e:
+                err_msg = str(e)
+                if 'Too many suboptimal structures' not in err_msg:
+                    return jsonify({'error': f'次优结构分析失败: {err_msg}'})
+        
+        if subopt_result is None:
+            return jsonify({'error': '次优结构数量过多（超过10万），请尝试使用更小的能量窗口（如 0.5 kcal/mol）'})
+        
+        # 收集原始数据（去重前）
+        raw_structures = []
+        for sr in subopt_result:
+            raw_structures.append({
+                'structure': str(sr.structure),
+                'energy': float(sr.energy)
+            })
         
         # 获取配对概率矩阵（用于底部显示）
         comp = Complex([strand], name='Input')
@@ -264,31 +386,49 @@ def analyze_subopt():
         pairs = comp_result[comp].pairs
         ensemble_size = int(comp_result[comp].ensemble_size)
         
-        # 整理结构数据
-        structures = []
-        total_prob = 0.0
+        # 物理常数
+        R = 0.001987  # kcal/(mol·K)
+        T_kelvin = temp + 273.15
+        RT = R * T_kelvin
         
-        for i, struct_result in enumerate(subopt_result[:max_structures]):
-            energy = float(struct_result.energy)
+        # 整理结构数据，按结构字符串去重
+        seen_structures = set()
+        structures = []
+        
+        for struct_result in subopt_result:
             structure_str = str(struct_result.structure)
             
-            # 计算玻尔兹曼概率
-            # P ∝ exp(-ΔG / RT)
-            # R = 0.001987 kcal/(mol·K)
-            R = 0.001987
-            T_kelvin = temp + 273.15
-            boltzmann_factor = np.exp(-energy / (R * T_kelvin))
+            # 跳过重复结构
+            if structure_str in seen_structures:
+                continue
+            seen_structures.add(structure_str)
+            
+            energy = float(struct_result.energy)
+            boltzmann_factor = np.exp(-energy / RT)
             
             structures.append({
-                'index': i + 1,
                 'structure': structure_str,
                 'energy': energy,
                 'boltzmann_factor': boltzmann_factor,
                 'sequence': sequence
             })
-            total_prob += boltzmann_factor
+            
+            if len(structures) >= max_structures:
+                break
+        
+        # 添加完全单链形式（无结构）
+        unpaired_struct = '.' * len(sequence)
+        if unpaired_struct not in seen_structures:
+            # 无结构形式的自由能 = 0（参考态），玻尔兹曼因子 = 1
+            structures.append({
+                'structure': unpaired_struct,
+                'energy': 0.0,
+                'boltzmann_factor': 1.0,
+                'sequence': sequence
+            })
         
         # 归一化概率
+        total_prob = sum(s['boltzmann_factor'] for s in structures)
         for s in structures:
             s['probability'] = s['boltzmann_factor'] / total_prob if total_prob > 0 else 0
         
@@ -301,11 +441,24 @@ def analyze_subopt():
             'sequence': sequence,
             'structures': structures,
             'total_structures': len(structures),
-            'energy_gap': energy_gap,
+            'energy_gap': actual_gap,
+            'auto_mode': auto_mode,
             'pairs_matrix': pairs.to_array().tolist(),
             'ensemble_size': ensemble_size,
-            'length': len(sequence)
+            'length': len(sequence),
+            'raw_data': {
+                'nupack_subopt_count': len(raw_structures),
+                'nupack_subopt_structures': raw_structures,
+                'ensemble_size': ensemble_size,
+                'material': material,
+                'temperature': temp,
+                'sodium': sodium,
+                'magnesium': magnesium,
+                'energy_gap': actual_gap
+            }
         }
+        if subopt_warning:
+            result_data['warning'] = subopt_warning
         
         return jsonify(result_data)
         
@@ -412,6 +565,8 @@ def analyze_complex():
         structure = data.get('structure', '').strip()
         material = data.get('material', 'dna')
         temp = float(data.get('temperature', 37))
+        sodium = float(data.get('sodium', 1.0))
+        magnesium = float(data.get('magnesium', 0.0))
         
         # 移除链分隔符（多链序列中用 + 连接）
         clean_seq = sequence.replace('+', '')
@@ -421,7 +576,7 @@ def analyze_complex():
             return jsonify({'error': '序列不能为空'})
         
         # 创建模型
-        model = Model(material=material, celsius=temp)
+        model = Model(material=material, celsius=temp, sodium=sodium, magnesium=magnesium)
         
         # 创建单链并分析
         strand = Strand(clean_seq, name='Complex')
@@ -902,6 +1057,30 @@ def visualize_varna():
         svg_content = svg_content.replace('&amp;gt;', '&gt;')
         svg_content = svg_content.replace('&amp;quot;', '&quot;')
         svg_content = svg_content.replace('&amp;apos;', '&apos;')
+        
+        # 为 SVG 添加 viewBox 和边距，避免内容被裁剪
+        try:
+            import re as _re
+            # 提取所有坐标值
+            nums = []
+            for m in _re.finditer(r'(?:x[12]?|y[12]?|cx|cy|r|width|height|font-size)="([\d.]+)"', svg_content):
+                nums.append(float(m.group(1)))
+            if nums:
+                pad = 50  # 边距
+                min_x = max(0, min(nums) - pad)
+                min_y = max(0, min(nums) - pad)
+                max_x = max(nums) + pad
+                max_y = max(nums) + pad
+                vw = max_x - min_x
+                vh = max_y - min_y
+                # 替换 <svg ...> 开始标签，添加 viewBox 和固定宽高
+                svg_content = _re.sub(
+                    r'<svg width="100%" height="100%"',
+                    f'<svg width="{int(vw)}" height="{int(vh)}" viewBox="{min_x} {min_y} {vw} {vh}"',
+                    svg_content, count=1
+                )
+        except Exception as e:
+            print(f'⚠️  SVG viewBox fix failed: {e}')
         
         return jsonify({
             'success': True,

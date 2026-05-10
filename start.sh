@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "=============================================="
-echo "   🧬 NUPACK Web v1.3.0"
+echo "   🧬 NUPACK Web v1.5.0"
 echo "=============================================="
 echo ""
 

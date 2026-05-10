@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NUPACK Web v1.4.0</title>
+    <title>NUPACK Web v1.5.0</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root {
@@ -310,6 +310,59 @@
 
         .action-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
 
+        .checkbox-label {
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: #000;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1.2;
+            min-height: 32px;
+        }
+        .checkbox-label:hover { border-color: var(--accent-blue); }
+        .checkbox-label:has(input:checked) {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.15);
+            color: #000;
+        }
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .all-struct-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .all-struct-table th {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .all-struct-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .all-struct-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .struct-dotbracket {
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            max-width: 400px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
         .status-badge {
             padding: 4px 10px;
             border-radius: 15px;
@@ -592,16 +645,18 @@
                 <span class="dna-emoji" onclick="showMambaModal()" title="点击查看彩蛋">🧬</span>
                 <span onclick="window.open('https://nupack.org/', '_blank')" title="访问 NUPACK 官网">NUPACK</span>
                 <span onclick="window.open('https://space.bilibili.com/533586737', '_blank')" title="访问作者主页">Web</span>
-                <span style="font-size: 0.5em; color: var(--accent-green); margin-left: 5px;">v1.3.0</span>
+                <span style="font-size: 0.5em; color: var(--accent-green); margin-left: 5px;">v1.5.0</span>
             </h1>
             <div class="header-right">
                 <a href="https://docs.nupack.org/" target="_blank" class="header-btn">📖 <span data-i18n="docs">文档</span></a>
+                <a href="/tutorial/guide.md" target="_blank" class="header-btn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;font-weight:600;">📘 <span data-i18n="guide">新手指南</span></a>
                 <button class="header-btn" onclick="toggleLanguage()" id="lang-btn">EN</button>
                 <button class="header-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
                 <button class="header-btn" onclick="openInJupyter()">📓 Jupyter</button>
                 <button class="header-btn" onclick="downloadProject()">💾 <span data-i18n="download">下载</span></button>
                 <a href="https://github.com/Luminave/nupack-webapp" target="_blank" class="header-btn">🐱 GitHub</a>
-                <a href="https://afdian.tv/a/sailfire" target="_blank" class="header-btn" id="donate-btn" title="">☕ <span data-i18n="donate">捐赠</span></a>
+                <button class="header-btn" onclick="checkUpdate()" style="font-weight:600;">🔄 <span data-i18n="checkUpdate">检查更新</span></button>
+                <a href="https://ifdian.net/a/sailfire" target="_blank" class="header-btn" id="donate-btn" title="">☕ <span data-i18n="donate">捐赠</span></a>
                 <button class="header-btn" onclick="showExportModal()">📦 <span data-i18n="export">导出</span></button>
             </div>
         </header>
@@ -616,6 +671,7 @@
                         <button class="mode-btn active" data-mode="single" onclick="switchMode('single')" data-i18n="single">单链分析</button>
                         <button class="mode-btn" data-mode="tube" onclick="switchMode('tube')" data-i18n="multi">多链分析</button>
                         <button class="mode-btn" data-mode="design" onclick="switchMode('design')" data-i18n="design">序列设计</button>
+                        <button class="mode-btn" data-mode="advanced" onclick="switchMode('advanced')" data-i18n="advanced">高级模式</button>
                     </div>
                 </div>
 
@@ -652,7 +708,7 @@
                     <div class="param-row">
                         <div>
                             <label data-i18n="lowColor">低概率色</label>
-                            <input type="color" id="color-low" value="#1a1a2e" style="height: 36px; padding: 2px;">
+                            <input type="color" id="color-low" value="#ffffff" style="height: 36px; padding: 2px;">
                         </div>
                         <div>
                             <label data-i18n="highColor">高概率色</label>
@@ -666,6 +722,32 @@
                         </div>
                     </div>
                     <button class="action-btn" style="width: 100%; margin-top: 8px;" onclick="resetColors()" data-i18n="resetColors">重置默认</button>
+
+                    <div style="margin-top: 12px;">
+                        <label style="font-size: 13px; margin-bottom: 6px; display: block;" data-i18n="baseColorLabel">碱基颜色</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <label style="font-size: 12px; font-weight: bold;">A</label>
+                                <input type="color" id="base-color-A" value="#ff6b6b" style="width: 36px; height: 28px; padding: 1px; cursor: pointer;" onchange="onBaseColorChange('A', this.value)">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <label style="font-size: 12px; font-weight: bold;">T</label>
+                                <input type="color" id="base-color-T" value="#4ecdc4" style="width: 36px; height: 28px; padding: 1px; cursor: pointer;" onchange="onBaseColorChange('T', this.value)">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <label style="font-size: 12px; font-weight: bold;">G</label>
+                                <input type="color" id="base-color-G" value="#ffe66d" style="width: 36px; height: 28px; padding: 1px; cursor: pointer;" onchange="onBaseColorChange('G', this.value)">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <label style="font-size: 12px; font-weight: bold;">C</label>
+                                <input type="color" id="base-color-C" value="#95e1d3" style="width: 36px; height: 28px; padding: 1px; cursor: pointer;" onchange="onBaseColorChange('C', this.value)">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <label style="font-size: 12px; font-weight: bold;">U</label>
+                                <input type="color" id="base-color-U" value="#4ecdc4" style="width: 36px; height: 28px; padding: 1px; cursor: pointer;" onchange="onBaseColorChange('U', this.value)">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="panel-section" id="single-input">
@@ -680,20 +762,20 @@
                     <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="suboptHint">
                         分析能量在 MFE 附近的多种可能结构
                     </p>
-                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                        <input type="checkbox" id="enable-subopt" onchange="toggleSuboptOptions()">
-                        <span data-i18n="enableSubopt">启用次优结构分析</span>
-                    </label>
-                    <div id="subopt-options" class="hidden">
-                        <div class="param-row">
-                            <div>
-                                <label data-i18n="energyGap">能量窗口 (kcal/mol)</label>
-                                <input type="number" id="energy-gap" value="3.0" min="0.5" max="10" step="0.5">
-                            </div>
-                            <div>
-                                <label data-i18n="maxStructures">最大结构数</label>
-                                <input type="number" id="max-structures" value="20" min="1" max="100">
-                            </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable-subopt" onchange="toggleSuboptOptions()">
+                            <span data-i18n="enableSubopt">启用次优结构分析</span>
+                        </label>
+                    </div>
+                    <div id="subopt-options" class="hidden" style="margin-top: 6px;">
+                        <label class="checkbox-label" style="margin-bottom: 6px;">
+                            <input type="checkbox" id="auto-energy-gap" checked onchange="toggleEnergyGapInput()">
+                            <span data-i18n="autoEnergyGap">自动使用合适的能量窗口</span>
+                        </label>
+                        <div id="manual-gap-container" class="hidden" style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                            <label style="font-size: 0.85em; white-space: nowrap;" data-i18n="energyGap">能量窗口 (kcal/mol)</label>
+                            <input type="number" id="energy-gap-input" value="3.0" min="0.1" max="999" step="0.5" style="width: 80px; padding: 4px 8px;">
                         </div>
                     </div>
                 </div>
@@ -769,6 +851,24 @@
                     <span class="status-badge ready" id="status" data-i18n="ready">就绪</span>
                 </div>
 
+                <div class="panel-section hidden" id="advanced-input">
+                    <a href="/tutorial/deploy.md" target="_blank" style="display:block; text-align:center; padding:10px; margin-bottom:14px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.95em; letter-spacing:0.5px;">📖 NUPACK 开发环境部署新手教程</a>
+                    <h3 data-i18n="advancedTitle">结构可视化</h3>
+                    <p style="font-size: 0.75em; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="advancedHint">
+                        输入序列和 dot-bracket 结构表达式，直接可视化
+                    </p>
+                    <label data-i18n="sequenceLabel">序列</label>
+                    <textarea id="advanced-seq" rows="2" placeholder="例如: GCGUACGAUCGAUCGAUCGAUCGUACGC" style="width:100%; font-family: monospace; resize: vertical;"></textarea>
+                    <label style="margin-top:8px;" data-i18n="structureLabel">结构 (dot-bracket)</label>
+                    <textarea id="advanced-struct" rows="2" placeholder="例如: (((((...((((...)))).)))))" style="width:100%; font-family: monospace; resize: vertical;"></textarea>
+                    <label style="margin-top:8px;" data-i18n="pairsMatrixLabel">配对概率矩阵（可选）</label>
+                    <textarea id="advanced-matrix" rows="3" placeholder="粘贴 NUPACK 输出的配对概率矩阵，支持空格/tab 分隔的 N×N 矩阵或 i j prob 格式" style="width:100%; font-family: monospace; resize: vertical; font-size: 0.8em;"></textarea>
+                    <label class="checkbox-label" style="margin-top: 6px;">
+                        <input type="checkbox" id="advanced-recalc-matrix">
+                        <span data-i18n="recalcMatrix">重新计算配对概率矩阵</span>
+                    </label>
+                </div>
+
                 <div class="result-content" id="result-content">
                     <div class="placeholder">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="60" height="60" style="opacity:0.3">
@@ -814,10 +914,10 @@
         // ==================== 多语言支持 ====================
         const i18n = {
             zh: {
-                docs: '文档', export: '导出', mode: '分析模式', single: '单链分析', multi: '多链分析',
+                docs: '文档', guide: '新手指南', checkUpdate: '检查更新', export: '导出', mode: '分析模式', single: '单链分析', multi: '多链分析',
                 download: '下载', donate: '捐赠', donateHint: '如果这帮助到了你，可以给我捐赠一杯咖啡吗？',
                 warning: '⚠️ 项目持续开发中，可能存在功能缺陷，请勿将其作为核酸链设计的最终标准！',
-                design: '序列设计', params: '物理参数', material: '材料类型', temp: '温度 (°C)',
+                design: '序列设计', advanced: '高级模式', visualize: '可视化', params: '物理参数', material: '材料类型', temp: '温度 (°C)',
                 seqInput: '序列输入', sequence: '核酸序列', dnaHint: 'DNA: A, C, G, T | RNA: A, C, G, U',
                 strandList: '链列表', addStrand: '添加链', maxSize: '最大复合物大小',
                 domains: '结构域定义', domainHint: 'N=任意, A/T/G/C=固定, R=嘌呤, Y=嘧啶',
@@ -832,16 +932,21 @@
                 colorSettings: '颜色设置', colorHint: '配对概率渐变颜色 (低 → 高)',
                 lowColor: '低概率色', highColor: '高概率色', resetColors: '重置默认',
                 suboptSettings: '次优结构分析', suboptHint: '分析能量在 MFE 附近的多种可能结构',
-                enableSubopt: '启用次优结构分析', energyGap: '能量窗口 (kcal/mol)',
+                enableSubopt: '启用次优结构分析', autoEnergyGap: '自动使用合适的能量窗口', energyGap: '能量窗口 (kcal/mol)',
                 maxStructures: '最大结构数', suboptResults: '次优结构结果',
+                calcAllStructs: '计算所有结构', viewAllStructs: '查看所有结构',
+                viewStruct: '查看', structProb: '概率', structEnergy: '能量',
+                allStructsTitle: '所有可能结构', baseColorLabel: '碱基颜色',
                 structureDist: '结构分布', structName: '结构', probability: '概率',
-                energy: '能量', viewStructure: '查看结构详情'
+                energy: '能量', viewStructure: '查看结构详情',
+                advancedTitle: '结构可视化', advancedHint: '输入序列和 dot-bracket 结构表达式，直接可视化',
+                sequenceLabel: '序列', structureLabel: '结构 (dot-bracket)', pairsMatrixLabel: '配对概率矩阵（可选）', recalcMatrix: '重新计算配对概率矩阵'
             },
             en: {
-                docs: 'Docs', export: 'Export', mode: 'Mode', single: 'Single', multi: 'Multi-strand',
+                docs: 'Docs', guide: 'Guide', checkUpdate: 'Check Update', export: 'Export', mode: 'Mode', single: 'Single', multi: 'Multi-strand',
                 download: 'Download', donate: 'Donate', donateHint: 'If this helped you, would you like to buy me a coffee?',
                 warning: '⚠️ This project is under active development and may have bugs. Do not use it as the final standard for nucleic acid design!',
-                design: 'Design', params: 'Parameters', material: 'Material', temp: 'Temperature (°C)',
+                design: 'Design', advanced: 'Advanced', visualize: 'Visualize', params: 'Parameters', material: 'Material', temp: 'Temperature (°C)',
                 seqInput: 'Sequence Input', sequence: 'Nucleic Acid Sequence', dnaHint: 'DNA: A, C, G, T | RNA: A, C, G, U',
                 strandList: 'Strand List', addStrand: 'Add Strand', maxSize: 'Max Complex Size',
                 domains: 'Domain Definition', domainHint: 'N=any, A/T/G/C=fixed, R=purine, Y=pyrimidine',
@@ -856,14 +961,38 @@
                 colorSettings: 'Color Settings', colorHint: 'Pairing probability gradient (Low → High)',
                 lowColor: 'Low Prob', highColor: 'High Prob', resetColors: 'Reset Default',
                 suboptSettings: 'Suboptimal Structures', suboptHint: 'Analyze multiple possible structures near MFE energy',
-                enableSubopt: 'Enable suboptimal analysis', energyGap: 'Energy gap (kcal/mol)',
+                enableSubopt: 'Enable suboptimal analysis', autoEnergyGap: 'Auto energy gap', energyGap: 'Energy gap (kcal/mol)',
                 maxStructures: 'Max structures', suboptResults: 'Suboptimal Structures',
+                calcAllStructs: 'Calculate all structures', viewAllStructs: 'View all structures',
+                viewStruct: 'View', structProb: 'Probability', structEnergy: 'Energy',
+                allStructsTitle: 'All Possible Structures', baseColorLabel: 'Base Colors',
                 structureDist: 'Structure Distribution', structName: 'Structure', probability: 'Probability',
-                energy: 'Energy', viewStructure: 'View Structure'
+                energy: 'Energy', viewStructure: 'View Structure',
+                advancedTitle: 'Structure Visualization', advancedHint: 'Enter sequence and dot-bracket structure to visualize directly',
+                sequenceLabel: 'Sequence', structureLabel: 'Structure (dot-bracket)', pairsMatrixLabel: 'Pairs probability matrix (optional)', recalcMatrix: 'Recalculate pairs probability matrix'
             }
         };
 
         let currentLang = 'zh';
+
+        async function checkUpdate() {
+            const isZh = currentLang === 'zh';
+            try {
+                const resp = await fetch('/api/check-update');
+                const data = await resp.json();
+                if (data.error) {
+                    alert(`⚠️ ${data.message}\n\n🔗 ${data.url}`);
+                } else if (data.update) {
+                    if (confirm(`🎉 ${data.message}\n\n当前版本: v${data.current}\n最新版本: v${data.latest}\n\n${isZh ? '是否前往 GitHub 查看？' : 'Go to GitHub?'}\n${data.url}`)) {
+                        window.open(data.url, '_blank');
+                    }
+                } else {
+                    alert(`✅ ${data.message} (v${data.current})`);
+                }
+            } catch (e) {
+                alert(`⚠️ ${isZh ? '检查更新失败' : 'Update check failed'}: ${e.message}`);
+            }
+        }
 
         function toggleLanguage() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -913,9 +1042,12 @@
 
         // 配对概率颜色设置 - 默认使用更显眼的颜色
         let gradientColors = {
-            low: '#1a1a2e',   // 深色（低概率）
+            low: '#ffffff',   // 白色（低概率）
             high: '#ff3366'   // 亮粉红色（高概率）
         };
+
+        // 碱基颜色（结构图中碱基圆环颜色）
+        let baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
 
         // 预设的醒目颜色方案
         const colorPresets = {
@@ -953,10 +1085,31 @@
             document.getElementById('color-high').value = gradientColors.high;
             updateGradientPreview();
 
+            // 重置碱基颜色
+            baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
+            for (var b in baseColors) {
+                var el = document.getElementById('base-color-' + b);
+                if (el) el.value = baseColors[b];
+            }
+
             // 如果已有分析结果，重新绘制
             if (currentStructureData) {
                 drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
                 drawHeatmap(currentStructureData.sequence, currentStructureData.pairsMatrix);
+            }
+        }
+
+        function onBaseColorChange(base, color) {
+            baseColors[base] = color;
+            // 同步 T/U
+            if (base === 'T') baseColors['U'] = color;
+            if (base === 'U') baseColors['T'] = color;
+            var el = document.getElementById(base === 'T' ? 'base-color-U' : 'base-color-T');
+            if (el && base === 'T') el.value = color;
+            if (el && base === 'U') el.value = color;
+
+            if (currentStructureData) {
+                drawStructureForce(currentStructureData.sequence, currentStructureData.structure, currentStructureData.pairsMatrix);
             }
         }
 
@@ -992,14 +1145,20 @@
             document.getElementById('single-input').classList.toggle('hidden', mode !== 'single');
             document.getElementById('tube-input').classList.toggle('hidden', mode !== 'tube');
             document.getElementById('design-input').classList.toggle('hidden', mode !== 'design');
-            document.getElementById('analyze-btn').textContent = i18n[currentLang][mode === 'design' ? 'design' : 'analyze'];
+            document.getElementById('advanced-input').classList.toggle('hidden', mode !== 'advanced');
+            const btnKey = mode === 'design' ? 'design' : mode === 'advanced' ? 'visualize' : 'analyze';
+            document.getElementById('analyze-btn').textContent = i18n[currentLang][btnKey];
         }
 
         // ==================== 次优结构选项切换 ====================
         function toggleSuboptOptions() {
-            const checkbox = document.getElementById('enable-subopt');
-            const options = document.getElementById('subopt-options');
-            options.classList.toggle('hidden', !checkbox.checked);
+            const enabled = document.getElementById('enable-subopt').checked;
+            document.getElementById('subopt-options').classList.toggle('hidden', !enabled);
+        }
+
+        function toggleEnergyGapInput() {
+            const auto = document.getElementById('auto-energy-gap').checked;
+            document.getElementById('manual-gap-container').classList.toggle('hidden', auto);
         }
 
         // ==================== 链管理 ====================
@@ -1238,8 +1397,9 @@
                     // 检查是否启用次优结构分析
                     const enableSubopt = document.getElementById('enable-subopt').checked;
                     if (enableSubopt) {
-                        params.energy_gap = parseFloat(document.getElementById('energy-gap').value);
-                        params.max_structures = parseInt(document.getElementById('max-structures').value);
+                        const isAuto = document.getElementById('auto-energy-gap').checked;
+                        params.energy_gap = isAuto ? -1 : (parseFloat(document.getElementById('energy-gap-input').value) || 3.0);
+                        params.max_structures = 200;
                         response = await fetch('/api/analyze/subopt', {
                             method: 'POST', headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({...params, sequence})
@@ -1291,6 +1451,45 @@
                         method: 'POST', headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({...params, domains, strands, complexes})
                     });
+                } else if (currentMode === 'advanced') {
+                    const seq = document.getElementById('advanced-seq').value.trim().toUpperCase();
+                    const struct = document.getElementById('advanced-struct').value.trim();
+                    const matrixText = document.getElementById('advanced-matrix').value.trim();
+                    const recalc = document.getElementById('advanced-recalc-matrix').checked;
+                    if (!seq) throw new Error(currentLang === 'zh' ? '请输入序列' : 'Please enter a sequence');
+                    if (!struct) throw new Error(currentLang === 'zh' ? '请输入结构表达式' : 'Please enter a structure');
+                    if (seq.length !== struct.length) throw new Error(currentLang === 'zh' ? `序列长度 (${seq.length}) 与结构长度 (${struct.length}) 不匹配` : `Sequence length (${seq.length}) does not match structure length (${struct.length})`);
+                    // 验证结构表达式合法
+                    let testStack = 0;
+                    for (const c of struct) {
+                        if (c === '(') testStack++;
+                        else if (c === ')') testStack--;
+                        else if (c !== '.') throw new Error(currentLang === 'zh' ? '结构表达式只能包含 (、) 和 .' : 'Structure can only contain (, ), and .');
+                        if (testStack < 0) throw new Error(currentLang === 'zh' ? '结构表达式括号不匹配' : 'Mismatched parentheses in structure');
+                    }
+                    if (testStack !== 0) throw new Error(currentLang === 'zh' ? '结构表达式括号不匹配' : 'Mismatched parentheses in structure');
+                    
+                    let pairsMatrix = null;
+                    if (matrixText) {
+                        // 用户粘贴了矩阵
+                        pairsMatrix = parsePairsMatrix(matrixText, seq.length);
+                    } else if (recalc) {
+                        // 请求 NUPACK 计算配对概率矩阵
+                        status.textContent = currentLang === 'zh' ? '计算配对概率矩阵中...' : 'Computing pairs matrix...';
+                        const apiResp = await fetch('/api/analyze/single', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ sequence: seq, material: params.material, temperature: params.temperature, sodium: params.sodium, magnesium: params.magnesium })
+                        });
+                        const apiData = await apiResp.json();
+                        if (apiData.error) throw new Error(apiData.error);
+                        pairsMatrix = apiData.pairs_matrix;
+                    }
+                    
+                    displayAdvancedResult(seq, struct, pairsMatrix);
+                    status.className = 'status-badge success';
+                    status.textContent = i18n[currentLang].complete;
+                    btn.disabled = false;
+                    return;
                 }
 
                 const data = await response.json();
@@ -1348,9 +1547,12 @@
                     <div id="structure-canvas"></div>
                 </div>
                 <div class="structure-viz" style="margin-top: 15px;">
-                    <h4>🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
-                    <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高' : 'Brighter color indicates higher pairing probability'}</p>
-                    <div id="heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <div><h4 style="margin:0;">🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
+                        <p style="font-size:0.8em;color:var(--text-secondary);margin:0;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高' : 'Brighter color indicates higher pairing probability'}</p></div>
+                        <button class="action-btn" onclick="exportHeatmap()">📥 ${currentLang === 'zh' ? '导出图片' : 'Export Image'}</button>
+                    </div>
+                    <div id="heatmap-canvas" style="overflow:auto;max-width:100%;"></div>
                 </div>
                 <div id="varna-container" style="display:none;margin-top:15px;padding:15px;border:2px solid var(--accent-green);border-radius:12px;background:var(--bg-canvas);"></div>
                 <div id="varna-downloads" style="display:none;" class="varna-controls"></div>`;
@@ -1420,7 +1622,8 @@
 
             const n = sequence.length;
             const cellSize = Math.min(25, Math.max(15, 400 / n));
-            const width = n * cellSize + 60;
+            const legendWidth = 50;
+            const width = n * cellSize + 60 + legendWidth;
             const height = n * cellSize + 40;
 
             const svg = d3.select(container).append('svg')
@@ -1429,6 +1632,12 @@
 
             // 颜色比例尺
             const colorScale = getProbColorScale();
+
+            // 悬浮窗
+            var tipDiv = document.createElement('div');
+            tipDiv.style.cssText = 'position:fixed;visibility:hidden;background:rgba(0,0,0,0.9);border:1px solid #00d9ff;border-radius:6px;padding:8px 12px;font-size:12px;color:#fff;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+            container.appendChild(tipDiv);
+            const tooltip = d3.select(tipDiv);
 
             // 绘制单元格
             for (let i = 0; i < n; i++) {
@@ -1442,18 +1651,25 @@
                         .attr('fill', colorScale(prob))
                         .attr('stroke', 'var(--border-color)')
                         .attr('stroke-width', 0.5)
+                        .style('cursor', 'crosshair')
                         .on('mouseover', function() {
                             d3.select(this).attr('stroke', '#fff').attr('stroke-width', 2);
                         })
+                        .on('mousemove', function(e) {
+                            tooltip.style('visibility', 'visible')
+                                .style('left', (e.clientX + 12) + 'px').style('top', (e.clientY - 10) + 'px')
+                                .html('<div style="font-weight:bold;margin-bottom:4px;">' + sequence[i] + (i+1) + ' \u2194 ' + sequence[j] + (j+1) + '</div>' +
+                                    '<div>\u6982\u7387: <span style="color:#00ff88;font-weight:bold;">' + (prob * 100).toFixed(2) + '%</span></div>' +
+                                    '<div>\u884C: ' + sequence[i] + ' # ' + (i+1) + ' | \u5217: ' + sequence[j] + ' # ' + (j+1) + '</div>');
+                        })
                         .on('mouseout', function() {
                             d3.select(this).attr('stroke', 'var(--border-color)').attr('stroke-width', 0.5);
-                        })
-                        .append('title')
-                        .text(`${sequence[i]}${i+1} - ${sequence[j]}${j+1}: ${(prob * 100).toFixed(2)}%`);
+                            tooltip.style('visibility', 'hidden');
+                        });
                 }
             }
 
-            // 绘制行标签（碱基位置）
+            // 绘制行标签（碱基+位置）
             for (let i = 0; i < n; i++) {
                 svg.append('text')
                     .attr('x', 35)
@@ -1461,10 +1677,10 @@
                     .attr('text-anchor', 'end')
                     .attr('fill', 'var(--text-secondary)')
                     .attr('font-size', '10px')
-                    .text(`${sequence[i]}${i + 1}`);
+                    .text(sequence[i] + (i + 1));
             }
 
-            // 绘制列标签（碱基位置）
+            // 绘制列标签（碱基+位置）
             for (let j = 0; j < n; j++) {
                 svg.append('text')
                     .attr('x', j * cellSize + 40 + cellSize / 2)
@@ -1472,8 +1688,70 @@
                     .attr('text-anchor', 'middle')
                     .attr('fill', 'var(--text-secondary)')
                     .attr('font-size', '10px')
-                    .text(`${sequence[j]}${j + 1}`);
+                    .text(sequence[j] + (j + 1));
             }
+
+            // 渐变色条（颜色参考）
+            const gradId = 'heatmap-grad-' + Math.random().toString(36).slice(2, 8);
+            const defs = svg.append('defs');
+            const grad = defs.append('linearGradient').attr('id', gradId).attr('x1', '0').attr('y1', '1').attr('x2', '0').attr('y2', '0');
+            const lowColor = getProbColorScale()(0);
+            const highColor = getProbColorScale()(1);
+            grad.append('stop').attr('offset', '0%').attr('stop-color', lowColor);
+            grad.append('stop').attr('offset', '100%').attr('stop-color', highColor);
+            const barX = n * cellSize + 55;
+            const barH = n * cellSize;
+            svg.append('rect').attr('x', barX).attr('y', 25).attr('width', 14).attr('height', barH).attr('fill', 'url(#' + gradId + ')').attr('stroke', '#ccc').attr('stroke-width', 0.5).attr('rx', 2);
+            svg.append('text').attr('x', barX + 20).attr('y', 30).attr('fill', 'var(--text-secondary)').attr('font-size', '9px').text('100%');
+            svg.append('text').attr('x', barX + 20).attr('y', 25 + barH / 2).attr('fill', 'var(--text-secondary)').attr('font-size', '9px').text('50%');
+            svg.append('text').attr('x', barX + 20).attr('y', 25 + barH).attr('fill', 'var(--text-secondary)').attr('font-size', '9px').text('0%');
+        }
+
+        function exportHeatmap() {
+            const svgEl = document.querySelector('#heatmap-canvas svg') || document.querySelector('#detail-heatmap-canvas svg');
+            if (!svgEl) return;
+            const isZh = currentLang === 'zh';
+            
+            // 获取 SVG 实际尺寸
+            const bbox = svgEl.getBBox();
+            const svgW = Math.ceil(bbox.x + bbox.width + 20);
+            const svgH = Math.ceil(bbox.y + bbox.height + 20);
+            const scale = 3; // 高清导出
+            
+            // 克隆 SVG 并设置明确尺寸
+            const clone = svgEl.cloneNode(true);
+            clone.setAttribute('width', svgW);
+            clone.setAttribute('height', svgH);
+            clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            // 内联 computed style 中的颜色变量
+            const style = document.createElement('style');
+            style.textContent = `text{font-family:sans-serif;} .text-secondary{fill:#999;}`;
+            clone.insertBefore(style, clone.firstChild);
+            
+            const svgStr = new XMLSerializer().serializeToString(clone);
+            const svgBlob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = svgW * scale;
+            canvas.height = svgH * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(function(blob) {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'pairs_matrix.png';
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                }, 'image/png');
+            };
+            img.src = url;
         }
 
         function displayTubeResult(data) {
@@ -1493,21 +1771,126 @@
                         <div id="pie-legend" style="margin-left: 15px; flex: 1;"></div>
                     </div>
                 </div>
-                <div id="complex-detail-view" style="margin-top: 15px;"></div>`;
+                <div id="complex-detail-view" style="margin-top: 15px;"></div>
+                <div style="margin-top: 12px; display: flex; gap: 10px;">
+                    <button class="action-btn" style="border: 1px solid var(--accent-blue); background: rgba(59,130,246,0.08); padding: 8px 20px; font-size: 13px;" onclick="showTubeAllComplexes()">📋 ${currentLang === 'zh' ? '查看所有结构' : 'View All Complexes'}</button>
+                    <button class="action-btn" style="border: 1px solid var(--accent-green); background: rgba(16,185,129,0.08); padding: 8px 20px; font-size: 13px;" onclick="showTubeRawData()">📄 ${currentLang === 'zh' ? '查看原始数据' : 'View Raw Data'}</button>
+                </div>
+                <div id="all-structures-view" style="margin-top: 15px;"></div>`;
             drawPieChart(data.complexes, totalConc);
+        }
+
+        function showTubeAllComplexes() {
+            const container = document.getElementById('all-structures-view');
+            if (!container || !tubeAnalysisData || !tubeAnalysisData.complexes) return;
+            const isZh = currentLang === 'zh';
+            const complexes = tubeAnalysisData.complexes;
+            const totalConc = complexes.reduce((s, c) => s + c.concentration, 0);
+
+            let rowsHtml = complexes.map((c, i) => {
+                const concStr = (c.concentration * 1e9).toFixed(4) + ' nM';
+                const pct = totalConc > 0 ? (c.concentration / totalConc * 100).toFixed(2) + '%' : '0%';
+                return `<tr>
+                    <td style="font-weight:600;color:var(--accent-blue);white-space:nowrap;">${c.name || '#' + (i+1)}</td>
+                    <td style="font-family:monospace;word-break:break-all;">${c.sequence}</td>
+                    <td class="struct-dotbracket">${c.mfe_structure}</td>
+                    <td style="white-space:nowrap;color:var(--accent-green);">${concStr}</td>
+                    <td style="white-space:nowrap;">${pct}</td>
+                    <td style="white-space:nowrap;">${c.mfe_energy.toFixed(2)} kcal/mol</td>
+                    <td><button class="action-btn" onclick="showComplexDetail(tubeAnalysisData.complexes[${i}])">${isZh ? '查看' : 'View'}</button></td>
+                </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="structure-viz" style="border: 2px solid var(--accent-blue);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <h4 style="margin:0;">📋 ${isZh ? '所有复合物' : 'All Complexes'} (${complexes.length})</h4>
+                        <button class="action-btn" onclick="document.getElementById('all-structures-view').innerHTML=''">✕ ${isZh ? '关闭' : 'Close'}</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="all-struct-table">
+                            <thead><tr>
+                                <th>${isZh ? '名称' : 'Name'}</th>
+                                <th>${isZh ? '序列' : 'Sequence'}</th>
+                                <th>${isZh ? 'MFE 结构' : 'MFE Structure'}</th>
+                                <th>${isZh ? '浓度' : 'Conc'}</th>
+                                <th>${isZh ? '占比' : 'Ratio'}</th>
+                                <th>${isZh ? '能量' : 'Energy'}</th>
+                                <th></th>
+                            </tr></thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+        }
+
+        function showTubeRawData() {
+            if (!tubeAnalysisData || !tubeAnalysisData.complexes) {
+                alert(currentLang === 'zh' ? '没有原始数据' : 'No raw data');
+                return;
+            }
+            const isZh = currentLang === 'zh';
+            const complexes = tubeAnalysisData.complexes;
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+
+            const modal = document.createElement('div');
+            modal.style.cssText = 'background:var(--bg-card);border-radius:12px;padding:24px;max-width:900px;width:90%;max-height:85vh;overflow-y:auto;border:1px solid var(--border-color);box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+
+            var rows = '';
+            for (var i = 0; i < complexes.length; i++) {
+                var c = complexes[i];
+                rows += '<tr><td style="padding:4px 10px;border-bottom:1px solid var(--border-color);">' + (c.name || '#' + (i+1)) + '</td>';
+                rows += '<td style="padding:4px 10px;border-bottom:1px solid var(--border-color);font-family:monospace;">' + c.sequence + '</td>';
+                rows += '<td style="padding:4px 10px;border-bottom:1px solid var(--border-color);font-family:monospace;">' + c.mfe_structure + '</td>';
+                rows += '<td style="padding:4px 10px;border-bottom:1px solid var(--border-color);">' + c.mfe_energy.toFixed(4) + '</td>';
+                rows += '<td style="padding:4px 10px;border-bottom:1px solid var(--border-color);">' + (c.concentration * 1e9).toFixed(4) + ' nM</td></tr>';
+            }
+
+            var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+            html += '<h3 style="margin:0;">' + (isZh ? '📄 多链分析原始数据' : '📄 Multi-strand Raw Data') + '</h3>';
+            html += '<button class="action-btn" onclick="this.closest(\'div[style*=fixed]\').remove()">\u2715 ' + (isZh ? '关闭' : 'Close') + '</button></div>';
+            html += '<div class="result-card" style="margin-bottom:16px;">';
+            html += '<div class="result-row"><span class="result-label">' + (isZh ? '复合物总数' : 'Total Complexes') + '</span><span class="result-value">' + complexes.length + '</span></div>';
+            html += '</div>';
+            html += '<h4 style="margin:0 0 8px;">' + (isZh ? '所有复合物' : 'All Complexes') + '</h4>';
+            html += '<div style="max-height:400px;overflow-y:auto;border:1px solid var(--border-color);border-radius:6px;">';
+            html += '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--bg-input);">';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? '名称' : 'Name') + '</th>';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? '序列' : 'Sequence') + '</th>';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? 'MFE 结构' : 'MFE Structure') + '</th>';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? '能量' : 'Energy') + '</th>';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? '浓度' : 'Conc') + '</th>';
+            html += '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+            html += '<button class="action-btn" style="margin-top:16px;" onclick="copyTubeRawData()">📋 ' + (isZh ? '复制 JSON' : 'Copy JSON') + '</button>';
+
+            modal.innerHTML = html;
+            overlay.appendChild(modal);
+            overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+            document.body.appendChild(overlay);
+        }
+
+        function copyTubeRawData() {
+            if (!tubeAnalysisData) return;
+            navigator.clipboard.writeText(JSON.stringify(tubeAnalysisData, null, 2));
+            alert(currentLang === 'zh' ? '已复制到剪贴板' : 'Copied to clipboard');
         }
 
         function displaySuboptResult(data) {
             suboptAnalysisData = data;
             currentStructureData = { sequence: data.sequence, structure: data.structures[0].structure, pairsMatrix: data.pairs_matrix };
             const content = document.getElementById('result-content');
+            const warningHtml = data.warning ? `<div class="result-card" style="border-left: 3px solid #ff9800; background: rgba(255,152,0,0.08);"><p style="color: #ff9800; margin: 0;">⚠️ ${data.warning}</p></div>` : '';
+            const displayGap = data.energy_gap;
             content.innerHTML = `
+                ${warningHtml}
                 <div class="result-card">
                     <h4>📊 ${currentLang === 'zh' ? '次优结构分析概览' : 'Suboptimal Analysis Overview'}</h4>
                     <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '序列' : 'Sequence'}</span><span class="result-value">${data.sequence}</span></div>
                     <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '长度' : 'Length'}</span><span class="result-value">${data.length} nt</span></div>
                     <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '结构数量' : 'Structures Found'}</span><span class="result-value">${data.total_structures}</span></div>
-                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量窗口' : 'Energy Gap'}</span><span class="result-value">${data.energy_gap} kcal/mol</span></div>
+                    <div class="result-row"><span class="result-label">${currentLang === 'zh' ? '能量窗口' : 'Energy Gap'}</span><span class="result-value">${displayGap} kcal/mol</span></div>
                 </div>
                 <div class="structure-viz">
                     <h4>🥧 ${currentLang === 'zh' ? '结构分布' : 'Structure Distribution'}</h4>
@@ -1516,12 +1899,20 @@
                         <div id="pie-canvas" style="width: 300px; height: 300px;"></div>
                         <div id="pie-legend" style="margin-left: 15px; flex: 1;"></div>
                     </div>
+                    <div style="margin-top: 12px; display: flex; gap: 10px;">
+                        <button class="action-btn" style="border: 1px solid var(--accent-blue); background: rgba(59,130,246,0.08); padding: 8px 20px; font-size: 13px;" onclick="showAllStructures()">📋 ${currentLang === 'zh' ? '查看所有结构' : 'View All Structures'}</button>
+                        <button class="action-btn" style="border: 1px solid var(--accent-green); background: rgba(16,185,129,0.08); padding: 8px 20px; font-size: 13px;" onclick="showRawData()">📄 ${currentLang === 'zh' ? '查看原始数据' : 'View Raw Data'}</button>
+                    </div>
                 </div>
+                <div id="all-structures-view" style="margin-top: 15px;"></div>
                 <div id="complex-detail-view" style="margin-top: 15px;"></div>
                 <div class="structure-viz" style="margin-top: 15px;">
-                    <h4>🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
-                    <p style="font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高（综合所有结构）' : 'Brighter color indicates higher pairing probability (ensemble average)'}</p>
-                    <div id="heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <div><h4 style="margin:0;">🌡️ ${currentLang === 'zh' ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
+                        <p style="font-size:0.8em;color:var(--text-secondary);margin:0;">${currentLang === 'zh' ? '颜色越亮表示配对概率越高（综合所有结构）' : 'Brighter color indicates higher pairing probability (ensemble average)'}</p></div>
+                        <button class="action-btn" onclick="exportHeatmap()">📥 ${currentLang === 'zh' ? '导出图片' : 'Export Image'}</button>
+                    </div>
+                    <div id="heatmap-canvas" style="overflow:auto;max-width:100%;"></div>
                 </div>`;
             drawSuboptPieChart(data.structures);
             drawHeatmap(data.sequence, data.pairs_matrix);
@@ -1550,7 +1941,7 @@
             const arc = d3.arc().innerRadius(0).outerRadius(radius);
             const arcHover = d3.arc().innerRadius(0).outerRadius(radius + 10);
 
-            const tooltip = d3.select('#pie-canvas').append('div').style('position', 'absolute').style('visibility', 'hidden').style('background', 'rgba(0,0,0,0.9)').style('border', '1px solid var(--accent-blue)').style('border-radius', '6px').style('padding', '8px').style('font-size', '11px').style('color', '#fff');
+            var pieTip = document.createElement('div'); pieTip.style.cssText = 'position:fixed;visibility:hidden;background:rgba(0,0,0,0.9);border:1px solid #00d9ff;border-radius:6px;padding:8px;font-size:11px;color:#fff;pointer-events:none;z-index:9999;'; document.getElementById('pie-canvas').appendChild(pieTip); const tooltip = d3.select(pieTip);
 
             const previewDiv = d3.select('#pie-legend').append('div').style('background', 'var(--bg-primary)').style('border-radius', '6px').style('padding', '10px').style('min-height', '150px');
             previewDiv.html(`<div style="color: var(--text-secondary); text-align: center; padding: 15px;">${currentLang === 'zh' ? '悬停查看预览' : 'Hover to preview'}</div>`);
@@ -1561,7 +1952,7 @@
                     tooltip.style('visibility', 'visible').html(`<div style="color:${d.data.color};font-weight:bold">${i18n[currentLang].structName} #${d.data.index}</div><div>${i18n[currentLang].probability}: ${(d.data.probability * 100).toFixed(2)}%</div><div>${i18n[currentLang].energy}: ${d.data.energy.toFixed(2)} kcal/mol</div>`);
                     updateSuboptPreview(d.data);
                 })
-                .on('mousemove', e => { const r = container.getBoundingClientRect(); tooltip.style('left', (e.clientX - r.left + 10) + 'px').style('top', (e.clientY - r.top - 5) + 'px'); })
+                .on('mousemove', e => { tooltip.style('left', (e.clientX + 10) + 'px').style('top', (e.clientY - 5) + 'px'); })
                 .on('mouseout', function() { d3.select(this).transition().duration(150).attr('d', arc); tooltip.style('visibility', 'hidden'); })
                 .on('click', (e, d) => showSuboptDetail(d.data));
 
@@ -1569,7 +1960,7 @@
 
             function updateSuboptPreview(data) {
                 previewDiv.html(`<div style="margin-bottom: 8px;"><span style="color:${data.color};font-weight:bold">${i18n[currentLang].structName} #${data.index}</span> <span style="color:var(--text-secondary);font-size:10px;">${(data.probability * 100).toFixed(2)}%</span></div><div style="font-size:9px;color:var(--text-secondary);word-break:break-all;margin-bottom:6px;">${currentLang === 'zh' ? '结构' : 'Struct'}: ${data.structure}</div><div id="preview-struct" style="width:100%;height:180px;background:var(--bg-canvas);border-radius:4px;"></div>`);
-                drawPreviewStructure(data.sequence, data.structure);
+                drawPreviewStructure(data.sequence, data.structure, suboptAnalysisData ? suboptAnalysisData.pairs_matrix : null);
             }
         }
 
@@ -1592,6 +1983,111 @@
                 const parentWidth = canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800;
                 const canvasWidth = canvasEl.clientWidth || parentWidth;
                 drawStructureForce(s, st, matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+            });
+        }
+
+        function showAllStructures() {
+            const container = document.getElementById('all-structures-view');
+            if (!container) return;
+            if (!suboptAnalysisData || !suboptAnalysisData.structures) return;
+
+            const isZh = currentLang === 'zh';
+            const structures = suboptAnalysisData.structures;
+
+            let rowsHtml = structures.map((s, i) => {
+                const probStr = (s.probability * 100).toFixed(4) + '%';
+                const energyStr = s.energy.toFixed(2) + ' kcal/mol';
+                const isUnpaired = s.structure === '.'.repeat(s.structure.length);
+                const label = isUnpaired ? (isZh ? '无结构（单链）' : 'Unpaired') : `#${s.index}`;
+                return `<tr>
+                    <td style="font-weight: 600; color: var(--accent-blue); white-space: nowrap;">${label}</td>
+                    <td class="struct-dotbracket">${s.structure}</td>
+                    <td style="white-space: nowrap; color: var(--accent-green);">${probStr}</td>
+                    <td style="white-space: nowrap;">${energyStr}</td>
+                    <td><button class="action-btn" onclick="showSuboptDetail(suboptAnalysisData.structures[${i}])">${isZh ? '查看' : 'View'}</button></td>
+                </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="structure-viz" style="border: 2px solid var(--accent-blue);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;">📋 ${isZh ? '所有可能结构' : 'All Possible Structures'} (${structures.length})</h4>
+                        <button class="action-btn" onclick="document.getElementById('all-structures-view').innerHTML=''">✕ ${isZh ? '关闭' : 'Close'}</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="all-struct-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>${isZh ? '结构 (dot-bracket)' : 'Structure (dot-bracket)'}</th>
+                                    <th>${isZh ? '概率' : 'Probability'}</th>
+                                    <th>${isZh ? '能量' : 'Energy'}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+
+            // 滚动到表格
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showRawData() {
+            if (!suboptAnalysisData || !suboptAnalysisData.raw_data) {
+                alert(currentLang === 'zh' ? '没有原始数据' : 'No raw data');
+                return;
+            }
+            const raw = suboptAnalysisData.raw_data;
+            const isZh = currentLang === 'zh';
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+
+            const modal = document.createElement('div');
+            modal.style.cssText = 'background:var(--bg-card);border-radius:12px;padding:24px;max-width:800px;width:90%;max-height:85vh;overflow-y:auto;border:1px solid var(--border-color);box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+
+            var rawTableRows = '';
+            for (var i = 0; i < raw.nupack_subopt_structures.length; i++) {
+                var s = raw.nupack_subopt_structures[i];
+                rawTableRows += '<tr><td style="padding:4px 10px;border-bottom:1px solid var(--border-color);">' + (i+1) + '</td>';
+                rawTableRows += '<td style="padding:4px 10px;border-bottom:1px solid var(--border-color);font-family:monospace;">' + s.structure + '</td>';
+                rawTableRows += '<td style="padding:4px 10px;border-bottom:1px solid var(--border-color);">' + s.energy.toFixed(4) + '</td></tr>';
+            }
+
+            var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+            html += '<h3 style="margin:0;">' + (isZh ? '📄 NUPACK 原始输出' : '📄 NUPACK Raw Output') + '</h3>';
+            html += '<button class="action-btn" onclick="this.closest(\'div[style*=fixed]\').remove()">\u2715 ' + (isZh ? '关闭' : 'Close') + '</button></div>';
+            html += '<div class="result-card" style="margin-bottom:16px;">';
+            html += '<div class="result-row"><span class="result-label">' + (isZh ? '材料' : 'Material') + '</span><span class="result-value">' + raw.material.toUpperCase() + '</span></div>';
+            html += '<div class="result-row"><span class="result-label">' + (isZh ? '温度' : 'Temperature') + '</span><span class="result-value">' + raw.temperature + ' \u00B0C</span></div>';
+            html += '<div class="result-row"><span class="result-label">Na\u207A</span><span class="result-value">' + raw.sodium + ' M</span></div>';
+            html += '<div class="result-row"><span class="result-label">Mg\u00B2\u207A</span><span class="result-value">' + raw.magnesium + ' M</span></div>';
+            html += '<div class="result-row"><span class="result-label">' + (isZh ? '能量窗口' : 'Energy Gap') + '</span><span class="result-value">' + raw.energy_gap + ' kcal/mol</span></div>';
+            html += '<div class="result-row"><span class="result-label">' + (isZh ? 'subopt 返回结构数' : 'Subopt Results') + '</span><span class="result-value">' + raw.nupack_subopt_count + '</span></div>';
+            html += '<div class="result-row"><span class="result-label">' + (isZh ? '系综大小' : 'Ensemble Size') + '</span><span class="result-value">' + raw.ensemble_size + '</span></div>';
+            html += '</div>';
+            html += '<h4 style="margin:0 0 8px;">' + (isZh ? 'subopt() 返回的所有结构（去重前）' : 'All structures from subopt() (before dedup)') + '</h4>';
+            html += '<div style="max-height:400px;overflow-y:auto;border:1px solid var(--border-color);border-radius:6px;">';
+            html += '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--bg-input);">';
+            html += '<th style="padding:8px 10px;text-align:left;">#</th>';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? '结构 (dot-bracket)' : 'Structure') + '</th>';
+            html += '<th style="padding:8px 10px;text-align:left;">' + (isZh ? '能量 (kcal/mol)' : 'Energy') + '</th>';
+            html += '</tr></thead><tbody>' + rawTableRows + '</tbody></table></div>';
+            html += '<div style="margin-top:12px;text-align:right;">';
+            html += '<button class="action-btn" style="border:1px solid var(--accent-green);background:rgba(16,185,129,0.08);" onclick="copyRawData()">' + (isZh ? '📋 复制 JSON' : '📋 Copy JSON') + '</button></div>';
+
+            modal.innerHTML = html;
+            overlay.appendChild(modal);
+            overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+            document.body.appendChild(overlay);
+        }
+
+        function copyRawData() {
+            if (!suboptAnalysisData || !suboptAnalysisData.raw_data) return;
+            navigator.clipboard.writeText(JSON.stringify(suboptAnalysisData.raw_data, null, 2)).then(function() {
+                alert(currentLang === 'zh' ? '已复制到剪贴板' : 'Copied to clipboard');
             });
         }
 
@@ -1647,8 +2143,179 @@
             alert(currentLang === 'zh' ? '已将设计结果填入多链分析模式，点击"开始分析"查看结构' : 'Design results filled in. Click "Start Analysis" to view structure.');
         }
 
+        // ==================== 高级模式结果 ====================
+        function displayAdvancedResult(seq, struct, inputMatrix) {
+            const content = document.getElementById('result-content');
+            const isZh = currentLang === 'zh';
+            
+            // 优先使用传入的矩阵（API计算结果），其次从输入框解析
+            let parsedMatrix = inputMatrix || null;
+            if (!parsedMatrix) {
+                const matrixText = document.getElementById('advanced-matrix').value.trim();
+                if (matrixText) {
+                    parsedMatrix = parsePairsMatrix(matrixText, seq.length);
+                }
+            }
+            
+            // 如果没有解析到矩阵，用结构字符串生成 0/1 矩阵
+            const matrix = parsedMatrix || Array(seq.length).fill(null).map(() => Array(seq.length).fill(0));
+            if (!parsedMatrix) {
+                const stk = [];
+                for (let i = 0; i < struct.length; i++) {
+                    if (struct[i] === '(') stk.push(i);
+                    else if (struct[i] === ')') { const j = stk.pop(); matrix[i][j] = matrix[j][i] = 1; }
+                }
+            }
+            
+            // 生成矩阵文本用于结果显示
+            let matrixDisplayText = '';
+            if (inputMatrix) {
+                // API 计算的矩阵，转成 N×N 格式文本
+                matrixDisplayText = inputMatrix.map(row => row.map(v => v.toFixed(6)).join('\t')).join('\n');
+            } else {
+                const rawText = document.getElementById('advanced-matrix').value.trim();
+                matrixDisplayText = rawText;
+            }
+            
+            const pairCount = struct.replace(/[^()]/g, '').length / 2;
+            const hasProbs = parsedMatrix !== null;
+            
+            const matrixSource = inputMatrix ? (isZh ? '✅ NUPACK 计算' : '✅ NUPACK computed')
+                : (parsedMatrix ? (isZh ? '✅ 用户粘贴' : '✅ User pasted')
+                : (isZh ? '❌ 未提供（填色=碱基色）' : '❌ Not provided (base colors)'));
+            
+            content.innerHTML = `
+                <div class="result-card">
+                    <h4>🧬 ${isZh ? '结构可视化' : 'Structure Visualization'}</h4>
+                    <div class="result-row"><span class="result-label">${isZh ? '序列' : 'Sequence'}</span><span class="result-value" style="word-break:break-all;">${seq}</span></div>
+                    <div class="result-row"><span class="result-label">${isZh ? '结构' : 'Structure'}</span><span class="result-value" style="word-break:break-all;">${struct}</span></div>
+                    <div class="result-row"><span class="result-label">${isZh ? '长度' : 'Length'}</span><span class="result-value">${seq.length} nt</span></div>
+                    <div class="result-row"><span class="result-label">${isZh ? '碱基对' : 'Base Pairs'}</span><span class="result-value">${pairCount}</span></div>
+                    <div class="result-row"><span class="result-label">${isZh ? '配对概率矩阵' : 'Pairs Matrix'}</span><span class="result-value" style="color:${hasProbs ? 'var(--accent-green)' : '#999'}">${matrixSource}</span></div>
+                </div>
+                <div class="result-card" style="margin-top:10px;">
+                    <label style="font-size:0.85em;color:var(--text-secondary);display:block;margin-bottom:6px;">${isZh ? '📝 配对概率矩阵（粘贴后点击应用）' : '📝 Pairs matrix (paste & apply)'}</label>
+                    <textarea id="advanced-matrix-result" rows="3" placeholder="${isZh ? '粘贴 NUPACK 输出的配对概率矩阵...' : 'Paste NUPACK pairs probability matrix...'}" style="width:100%;font-family:monospace;resize:vertical;font-size:0.8em;">${matrixDisplayText}</textarea>
+                    <button class="action-btn" style="margin-top:6px;" onclick="applyAdvancedMatrix()">${isZh ? '🔄 应用矩阵并重绘' : '🔄 Apply & Redraw'}</button>
+                </div>
+                <div id="advanced-prob-legend" style="margin:10px 0;${hasProbs ? '' : 'display:none;'}">
+                    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-card);border-radius:6px;">
+                        <span style="font-size:0.8em;color:var(--text-secondary);">${isZh ? '配对概率色:' : 'Prob colors:'}</span>
+                        <div style="flex:1;height:14px;border-radius:3px;background:linear-gradient(to right,${getProbColorScale()(0)},${getProbColorScale()(0.5)},${getProbColorScale()(1)});"></div>
+                        <span style="font-size:0.75em;color:var(--text-secondary);">0%</span>
+                        <span style="font-size:0.75em;color:var(--text-secondary);">50%</span>
+                        <span style="font-size:0.75em;color:var(--text-secondary);">100%</span>
+                    </div>
+                </div>
+                <div id="advanced-color-panel" style="margin: 10px 0; padding: 10px; background: var(--bg-card); border-radius: 6px;">
+                    <span style="font-size: 0.85em; color: var(--text-secondary);">${isZh ? '碱基颜色:' : 'Base colors:'}</span>
+                    <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+                        ${['A','T','G','C','U'].map(b => `
+                            <div style="display:flex;align-items:center;gap:4px;">
+                                <label style="font-size:12px;font-weight:bold;">${b}</label>
+                                <input type="color" value="${baseColors[b]}" style="width:36px;height:28px;padding:1px;cursor:pointer;" onchange="baseColors['${b}']=this.value;${b==='T'?"baseColors['U']=this.value":b==='U'?"baseColors['T']=this.value":""};redrawAdvancedStructure();">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div id="advanced-base-info-panel"></div>
+                <div class="viz-controls">
+                    <button class="action-btn" onclick="fixDetailLayout()">📌 ${isZh ? '固定布局' : 'Fix Layout'}</button>
+                    <button class="action-btn" onclick="toggleLockLayout()">🔒 ${isZh ? '确定布局' : 'Lock'}</button>
+                    <button class="action-btn" onclick="toggleDetailAutoLayout()">🔄 ${isZh ? '自动布局' : 'Auto Layout'}</button>
+                    <button class="action-btn" onclick="toggleDetailCompactLayout()">📦 ${isZh ? '紧凑布局' : 'Compact'}</button>
+                    <div class="viz-control-group"><label>${isZh ? '缩放' : 'Zoom'}:</label><input type="range" id="detail-zoom" min="0.1" max="5" step="0.1" value="1" oninput="updateDetailZoom(this.value)"><input type="number" id="detail-zoom-input" step="0.1" value="1.0" style="width:60px;margin-left:5px;" onchange="updateDetailZoomFromInput(this.value)"></div>
+                    <div class="viz-control-group"><label>${isZh ? '大小' : 'Size'}:</label><input type="range" id="detail-node-size" min="4" max="30" step="1" value="12" oninput="updateDetailNodeSize(this.value)"><input type="number" id="detail-node-size-input" step="1" value="12" style="width:50px;margin-left:5px;" onchange="updateDetailNodeSizeFromInput(this.value)"></div>
+                    <div class="viz-control-group"><label>${isZh ? '线宽' : 'Width'}:</label><input type="range" id="detail-linewidth" min="0.5" max="10" step="0.5" value="3" onchange="updateDetailLineWidth(this.value)"><input type="number" id="detail-linewidth-input" step="0.5" value="3" style="width:50px;margin-left:5px;" onchange="updateDetailLineWidthFromInput(this.value)"></div>
+                    <button class="action-btn" onclick="toggleDetailFullscreen()">⛶ ${isZh ? '全屏' : 'Fullscreen'}</button>
+                    <button class="action-btn" onclick="rotateStructure()">🔃 ${isZh ? '旋转' : 'Rotate'}</button>
+                    <button class="action-btn" id="advanced-varna-btn" onclick="downloadDetailVarna()" style="background:linear-gradient(135deg,#FF6B6B 0%,#FF8E53 100%);color:white;font-weight:bold;border:2px solid #FF6B6B;margin-left:5px;">🎨 ${isZh ? '导出VARNA结构图' : 'Export VARNA'}</button>
+                </div>
+                <div id="detail-canvas" style="width:100%;height:450px;background:var(--bg-canvas);border-radius:6px;position:relative;"></div>
+                ${hasProbs ? `<div class="structure-viz" style="margin-top:15px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <div><h4 style="margin:0;">🌡️ ${isZh ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
+                        <p style="font-size:0.8em;color:var(--text-secondary);margin:0;">${isZh ? '颜色越亮表示配对概率越高' : 'Brighter color indicates higher pairing probability'}</p></div>
+                        <button class="action-btn" onclick="exportHeatmap()">📥 ${isZh ? '导出图片' : 'Export Image'}</button>
+                    </div>
+                    <div id="heatmap-canvas" style="overflow:auto;max-width:100%;"></div>
+                </div>` : ''}`;
+            
+            currentDetailStructureData = { sequence: seq, structure: struct, pairsMatrix: matrix };
+            requestAnimationFrame(() => {
+                const canvasEl = document.getElementById('detail-canvas');
+                const w = canvasEl.clientWidth || canvasEl.parentElement.clientWidth || 800;
+                drawStructureForce(seq, struct, matrix, canvasEl, w, 450, 'advanced-base-info-panel', { useBaseColors: !hasProbs });
+                if (hasProbs) drawHeatmap(seq, matrix);
+            });
+        }
+
+        function parsePairsMatrix(text, n) {
+            try {
+                const lines = text.trim().split('\n').filter(l => l.trim() && !l.startsWith('#'));
+                if (lines.length === 0) return null;
+                const matrix = Array(n).fill(null).map(() => Array(n).fill(0));
+                // 判断格式：如果行数 == n 且每行有 n 个数，就是 N×N 矩阵
+                const firstLineNums = lines[0].trim().split(/[\s\t,;]+/).filter(Boolean);
+                if (lines.length === n && firstLineNums.length === n) {
+                    // N×N 矩阵格式
+                    for (let i = 0; i < n; i++) {
+                        const nums = lines[i].trim().split(/[\s\t,;]+/).filter(Boolean);
+                        for (let j = 0; j < n; j++) {
+                            matrix[i][j] = parseFloat(nums[j]) || 0;
+                        }
+                    }
+                    return matrix;
+                }
+                // 否则尝试 i j prob 格式
+                for (const line of lines) {
+                    const parts = line.trim().split(/[\s\t,;]+/).filter(Boolean);
+                    if (parts.length >= 3) {
+                        const i = parseInt(parts[0]), j = parseInt(parts[1]), p = parseFloat(parts[2]);
+                        if (!isNaN(i) && !isNaN(j) && !isNaN(p) && i >= 0 && i < n && j >= 0 && j < n) {
+                            matrix[i][j] = p;
+                            matrix[j][i] = p;
+                        }
+                    }
+                }
+                return matrix;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function applyAdvancedMatrix() {
+            if (!currentDetailStructureData) return;
+            const { sequence, structure } = currentDetailStructureData;
+            const matrixText = document.getElementById('advanced-matrix-result').value.trim();
+            if (!matrixText) return;
+            const parsed = parsePairsMatrix(matrixText, sequence.length);
+            if (!parsed) { alert(currentLang === 'zh' ? '矩阵解析失败，请检查格式' : 'Failed to parse matrix'); return; }
+            currentDetailStructureData.pairsMatrix = parsed;
+            // 重新渲染整个结果页以更新状态显示
+            displayAdvancedResult(sequence, structure);
+        }
+
+        function redrawAdvancedStructure() {
+            if (!currentDetailStructureData) return;
+            const { sequence, structure, pairsMatrix } = currentDetailStructureData;
+            const canvasEl = document.getElementById('detail-canvas');
+            if (!canvasEl) return;
+            const w = canvasEl.clientWidth || canvasEl.parentElement.clientWidth || 800;
+            // 检查是否有真实概率数据（不只是 0/1）
+            let hasProbs = false;
+            for (let i = 0; i < pairsMatrix.length && !hasProbs; i++) {
+                for (let j = 0; j < pairsMatrix[i].length && !hasProbs; j++) {
+                    const v = pairsMatrix[i][j];
+                    if (v > 0 && v < 1) hasProbs = true;
+                }
+            }
+            drawStructureForce(sequence, structure, pairsMatrix, canvasEl, w, 450, 'advanced-base-info-panel', { useBaseColors: !hasProbs });
+        }
+
         // ==================== 结构绘制（简化版）====================
-        function drawStructureForce(sequence, structure, pairsMatrix, customContainer, customWidth, customHeight, infoPanelId) {
+        function drawStructureForce(sequence, structure, pairsMatrix, customContainer, customWidth, customHeight, infoPanelId, options) {
+            const useBaseColors = options && options.useBaseColors;
             const container = customContainer || document.getElementById('structure-canvas');
             if (!container) return;
             const width = customWidth || container.clientWidth || 700, height = customHeight || 500;
@@ -1670,7 +2337,7 @@
             }
 
             const probColorScale = getProbColorScale();
-            const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
+            
 
             const pairs = [], stack = [];
             for (let i = 0; i < cleanStructure.length; i++) {
@@ -1773,7 +2440,18 @@
 
             // 渲染节点圆圈
             const nodeRadius = vizParams.nodeRadius || 12;
-            if (vizParams.multiChainMode && totalChains > 1) {
+            if (useBaseColors) {
+                // 高级模式：填充色为碱基颜色，轮廓色加深
+                node.append('circle').attr('r', nodeRadius)
+                    .attr('fill', d => baseColors[d.base] || '#888')
+                    .attr('stroke', d => {
+                        const c = baseColors[d.base] || '#888';
+                        // 简单加深轮廓
+                        const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+                        return `rgb(${Math.max(0,r-50)},${Math.max(0,g-50)},${Math.max(0,b-50)})`;
+                    })
+                    .attr('stroke-width', 2);
+            } else if (vizParams.multiChainMode && totalChains > 1) {
                 // 多链模式：填充色由链决定，轮廓色由配对概率决定
                 node.append('circle').attr('r', nodeRadius)
                     .attr('fill', d => chainColors[d.chainIndex % chainColors.length])
@@ -1921,7 +2599,7 @@
             const radius = Math.min(width - 150, height) / 2 - 40;
             const centerX = (width - 100) / 2, centerY = height / 2;
 
-            const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
+            
             const probColorScale = getProbColorScale();
             const maxPairProbs = [];
             for (let i = 0; i < n; i++) { let maxP = 0; for (let j = 0; j < n; j++) if (i !== j && pairsMatrix[i][j] > maxP) maxP = pairsMatrix[i][j]; maxPairProbs.push(maxP); }
@@ -2032,7 +2710,7 @@
             const arc = d3.arc().innerRadius(0).outerRadius(radius);
             const arcHover = d3.arc().innerRadius(0).outerRadius(radius + 10);
 
-            const tooltip = d3.select('#pie-canvas').append('div').style('position', 'absolute').style('visibility', 'hidden').style('background', 'rgba(0,0,0,0.9)').style('border', '1px solid var(--accent-blue)').style('border-radius', '6px').style('padding', '8px').style('font-size', '11px').style('color', '#fff');
+            var pieTip = document.createElement('div'); pieTip.style.cssText = 'position:fixed;visibility:hidden;background:rgba(0,0,0,0.9);border:1px solid #00d9ff;border-radius:6px;padding:8px;font-size:11px;color:#fff;pointer-events:none;z-index:9999;'; document.getElementById('pie-canvas').appendChild(pieTip); const tooltip = d3.select(pieTip);
 
             const previewDiv = d3.select('#pie-legend').append('div').style('background', 'var(--bg-primary)').style('border-radius', '6px').style('padding', '10px').style('min-height', '150px');
             previewDiv.html(`<div style="color: var(--text-secondary); text-align: center; padding: 15px;">${currentLang === 'zh' ? '悬停查看预览' : 'Hover to preview'}</div>`);
@@ -2043,7 +2721,7 @@
                     tooltip.style('visibility', 'visible').html(`<div style="color:${d.data.color};font-weight:bold">${d.data.name}</div><div>${(d.data.concentration * 1e9).toFixed(2)} nM (${d.data.percentage.toFixed(1)}%)</div><div>ΔG: ${d.data.mfe_energy.toFixed(2)} kcal/mol</div>`);
                     updatePreview(d.data);
                 })
-                .on('mousemove', e => { const r = container.getBoundingClientRect(); tooltip.style('left', (e.clientX - r.left + 10) + 'px').style('top', (e.clientY - r.top - 5) + 'px'); })
+                .on('mousemove', e => { tooltip.style('left', (e.clientX + 10) + 'px').style('top', (e.clientY - 5) + 'px'); })
                 .on('mouseout', function() { d3.select(this).transition().duration(150).attr('d', arc); tooltip.style('visibility', 'hidden'); })
                 .on('click', (e, d) => showComplexDetail(d.data));
 
@@ -2051,11 +2729,11 @@
 
             function updatePreview(data) {
                 previewDiv.html(`<div style="margin-bottom: 8px;"><span style="color:${data.color};font-weight:bold">${data.name}</span> <span style="color:var(--text-secondary);font-size:10px;">${(data.concentration * 1e9).toFixed(2)} nM</span></div><div style="font-size:9px;color:var(--text-secondary);word-break:break-all;margin-bottom:6px;">${currentLang === 'zh' ? '序列' : 'Seq'}: ${data.sequence}</div><div id="preview-struct" style="width:100%;height:180px;background:var(--bg-canvas);border-radius:4px;"></div>`);
-                drawPreviewStructure(data.sequence, data.mfe_structure);
+                drawPreviewStructure(data.sequence, data.mfe_structure, null);
             }
         }
 
-        function drawPreviewStructure(seq, struct) {
+        function drawPreviewStructure(seq, struct, pairsMatrix) {
             const container = document.getElementById('preview-struct');
             if (!container) return;
             const width = container.clientWidth || 200, height = 180;
@@ -2067,17 +2745,27 @@
             const pairs = [], stack = [];
             for (let i = 0; i < struct.length; i++) { if (struct[i] === '(') stack.push(i); else if (struct[i] === ')') pairs.push([stack.pop(), i]); }
 
-            const baseColors = { 'A': '#ff6b6b', 'T': '#4ecdc4', 'G': '#ffe66d', 'C': '#95e1d3', 'U': '#4ecdc4' };
-            
+            // 计算每个碱基的最大配对概率
+            var maxProbs = [];
+            for (var ii = 0; ii < n; ii++) {
+                if (pairsMatrix) {
+                    maxProbs[ii] = Math.max.apply(null, pairsMatrix[ii]);
+                } else {
+                    maxProbs[ii] = struct[ii] !== '.' ? 1 : 0;
+                }
+            }
+            var probColorScale = getProbColorScale();
+
             // 圆周初始布局（自动布局）
             const centerX = width / 2, centerY = height / 2;
             const radius = Math.min(width, height) / 2 - 20;
             const nodes = seq.split('').map((base, i) => {
                 const angle = (2 * Math.PI * i / n) - Math.PI / 2;
-                return { 
-                    id: i, 
-                    base, 
+                return {
+                    id: i,
+                    base,
                     paired: struct[i] !== '.',
+                    maxProb: maxProbs[i],
                     x: centerX + radius * Math.cos(angle),
                     y: centerY + radius * Math.sin(angle)
                 };
@@ -2096,7 +2784,7 @@
 
             const link = svg.append('g').selectAll('line').data(links).enter().append('line').attr('stroke', d => d.type === 'pair' ? '#00d9ff' : '#666').attr('stroke-width', d => d.type === 'pair' ? 2 : 1);
             const node = svg.append('g').selectAll('g').data(nodes).enter().append('g');
-            node.append('circle').attr('r', r).attr('fill', d => d.paired ? '#00d9ff' : '#444466').attr('stroke', d => baseColors[d.base]).attr('stroke-width', 1.5);
+            node.append('circle').attr('r', r).attr('fill', d => probColorScale(d.maxProb)).attr('stroke', d => baseColors[d.base]).attr('stroke-width', 1.5);
             if (n <= 15) node.append('text').attr('text-anchor', 'middle').attr('dy', '0.3em').attr('font-size', '6px').attr('fill', '#000').attr('font-weight', 'bold').text(d => d.base);
             simulation.on('tick', () => { link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y); node.attr('transform', d => `translate(${d.x},${d.y})`); });
         }
@@ -2145,6 +2833,38 @@
                     addDetailHeatmap(s, matrix);
                 }
             });
+
+            // 异步请求后端获取真实的系综配对概率
+            (async () => {
+                try {
+                    const resp = await fetch('/api/analyze/complex', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sequence: data.sequence,
+                            structure: data.mfe_structure,
+                            material: document.getElementById('material').value,
+                            temperature: parseFloat(document.getElementById('temperature').value),
+                            sodium: parseFloat(document.getElementById('sodium').value),
+                            magnesium: parseFloat(document.getElementById('magnesium').value)
+                        })
+                    });
+                    const result = await resp.json();
+                    if (result.pairs_matrix) {
+                        currentDetailStructureData.pairsMatrix = result.pairs_matrix;
+                        // 重新渲染结构图以更新连线颜色
+                        const canvasEl = document.getElementById('detail-canvas');
+                        const canvasWidth = canvasEl.clientWidth || (canvasEl.parentElement ? canvasEl.parentElement.clientWidth : 800);
+                        drawStructureForce(data.sequence, st, result.pairs_matrix, canvasEl, canvasWidth, 450, 'detail-base-info-panel');
+                        // 更新热力图
+                        if (data.sequence.includes('+')) {
+                            addDetailHeatmap(s, result.pairs_matrix);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('获取系综配对概率失败，使用 MFE 结构矩阵:', e);
+                }
+            })();
         }
         
         // 为详情页添加配对概率矩阵
@@ -2153,9 +2873,13 @@
             if (!container) return;
             
             container.style.display = 'block';
+            const isZh = currentLang === 'zh';
             container.innerHTML = `
-                <h4 style="margin: 0 0 10px 0;">🌡️ 配对概率矩阵</h4>
-                <div id="detail-heatmap-canvas" style="overflow: auto; max-width: 100%;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <h4 style="margin:0;">🌡️ ${isZh ? '配对概率矩阵' : 'Pairing Probability Matrix'}</h4>
+                    <button class="action-btn" onclick="exportHeatmap()">📥 ${isZh ? '导出图片' : 'Export Image'}</button>
+                </div>
+                <div id="detail-heatmap-canvas" style="overflow:auto;max-width:100%;"></div>
             `;
             
             const heatmapContainer = document.getElementById('detail-heatmap-canvas');
@@ -2166,16 +2890,25 @@
         function drawDetailHeatmap(sequence, matrix, container) {
             const n = sequence.length;
             const cellSize = Math.min(20, Math.max(10, 400 / n));
+            const labelStep = n <= 30 ? 1 : Math.ceil(n / 20);
+            const leftPad = 35;
+            const topPad = 35;
             
             const svg = d3.select(container).append('svg')
-                .attr('width', n * cellSize + 60)
-                .attr('height', n * cellSize + 60);
+                .attr('width', n * cellSize + leftPad + 10)
+                .attr('height', n * cellSize + topPad + 10);
             
             const g = svg.append('g')
-                .attr('transform', 'translate(30, 30)');
+                .attr('transform', 'translate(' + leftPad + ',' + topPad + ')');
             
             const colorScale = d3.scaleSequential(d3.interpolateViridis)
                 .domain([0, 1]);
+            
+            // 悬浮窗
+            var tipDiv2 = document.createElement('div');
+            tipDiv2.style.cssText = 'position:fixed;visibility:hidden;background:rgba(0,0,0,0.9);border:1px solid #00d9ff;border-radius:6px;padding:8px 12px;font-size:12px;color:#fff;pointer-events:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+            container.appendChild(tipDiv2);
+            const tooltip = d3.select(tipDiv2);
             
             // 绘制单元格
             for (let i = 0; i < n; i++) {
@@ -2187,29 +2920,42 @@
                         .attr('height', cellSize - 1)
                         .attr('fill', colorScale(matrix[i][j]))
                         .attr('stroke', '#fff')
-                        .attr('stroke-width', 0.5);
+                        .attr('stroke-width', 0.5)
+                        .style('cursor', 'crosshair')
+                        .on('mouseover', function() {
+                            d3.select(this).attr('stroke', '#00d9ff').attr('stroke-width', 2);
+                        })
+                        .on('mousemove', function(e) {
+                            tooltip.style('visibility', 'visible')
+                                .style('left', (e.clientX + 12) + 'px').style('top', (e.clientY - 10) + 'px')
+                                .html('<div style="font-weight:bold;margin-bottom:4px;">' + sequence[i] + (i+1) + ' \u2194 ' + sequence[j] + (j+1) + '</div>' +
+                                    '<div>\u6982\u7387: <span style="color:#00ff88;font-weight:bold;">' + (matrix[i][j] * 100).toFixed(2) + '%</span></div>' +
+                                    '<div>\u884C: ' + sequence[i] + ' # ' + (i+1) + ' | \u5217: ' + sequence[j] + ' # ' + (j+1) + '</div>');
+                        })
+                        .on('mouseout', function() {
+                            d3.select(this).attr('stroke', '#fff').attr('stroke-width', 0.5);
+                            tooltip.style('visibility', 'hidden');
+                        });
                 }
             }
             
-            // 添加轴标签（仅当序列不太长时）
-            if (n <= 50) {
-                for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 10))) {
-                    g.append('text')
-                        .attr('x', i * cellSize + cellSize / 2)
-                        .attr('y', -5)
-                        .attr('text-anchor', 'middle')
-                        .attr('font-size', '10px')
-                        .attr('fill', '#666')
-                        .text(i + 1);
-                    
-                    g.append('text')
-                        .attr('x', -5)
-                        .attr('y', i * cellSize + cellSize / 2 + 3)
-                        .attr('text-anchor', 'end')
-                        .attr('font-size', '10px')
-                        .attr('fill', '#666')
-                        .text(i + 1);
-                }
+            // 轴标签（碱基+位置）
+            for (let i = 0; i < n; i += labelStep) {
+                g.append('text')
+                    .attr('x', i * cellSize + cellSize / 2)
+                    .attr('y', -5)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '9px')
+                    .attr('fill', '#999')
+                    .text(sequence[i] + (i + 1));
+                
+                g.append('text')
+                    .attr('x', -5)
+                    .attr('y', i * cellSize + cellSize / 2 + 3)
+                    .attr('text-anchor', 'end')
+                    .attr('font-size', '9px')
+                    .attr('fill', '#999')
+                    .text(sequence[i] + (i + 1));
             }
         }
 
@@ -2635,6 +3381,10 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 默认浅色模式
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.getElementById('theme-btn').textContent = '☀️';
+
             updateLanguage();
 
             // 初始化颜色设置
@@ -2674,14 +3424,34 @@
                 const varnaSequence = originalSeq.replace(/\+/g, '&');
                 const varnaStructure = originalStruct.replace(/\+/g, '&');
                 
+                // 获取配对概率矩阵：优先使用当前详情数据，其次从分析结果获取
+                let pm = currentDetailStructureData.pairsMatrix;
+                let hasRealProbs = false;
+                if (pm) {
+                    for (let i = 0; i < pm.length && !hasRealProbs; i++) {
+                        for (let j = 0; j < pm[i].length && !hasRealProbs; j++) {
+                            const v = pm[i][j];
+                            if (v > 0 && v < 1) hasRealProbs = true;
+                        }
+                    }
+                }
+                // 如果当前矩阵只有 0/1（来自结构），尝试从分析结果获取真实概率矩阵
+                if (!hasRealProbs) {
+                    const src = analysisResult || suboptAnalysisData || tubeAnalysisData;
+                    if (src && src.pairs_matrix) {
+                        pm = src.pairs_matrix;
+                        hasRealProbs = true;
+                    }
+                }
+                
                 const response = await fetch('/api/visualize/varna', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        sequence: varnaSequence,  // 使用VARNA格式的多链序列
-                        structure: varnaStructure,  // 使用VARNA格式的多链结构
-                        pairs_matrix: currentDetailStructureData.pairsMatrix,  // 传递配对概率矩阵
-                        show_probability: true  // 启用配对概率着色
+                        sequence: varnaSequence,
+                        structure: varnaStructure,
+                        pairs_matrix: hasRealProbs ? pm : null,
+                        show_probability: hasRealProbs
                     })
                 });
                 
