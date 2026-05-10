@@ -134,6 +134,32 @@ pip install -r requirements.txt
 python3 app.py
 ```
 
+## 🔄 更新方法
+
+如果已有旧版本，按以下步骤更新到最新版：
+
+```bash
+# 进入旧版本目录的上一级
+cd ~
+
+# 删除旧版本文件夹
+rm -rf nupack-webapp
+
+# 拉取最新版本
+git clone https://github.com/Luminave/nupack-webapp.git
+
+# 进入目录
+cd nupack-webapp
+
+# 重新安装（如需要）
+./install.sh
+
+# 启动
+./start.sh
+```
+
+> ⚠️ 注意：删除旧版本文件夹前，请确认没有自己修改过的代码需要保留。
+
 ## 📖 使用示例
 
 ### 单链分析

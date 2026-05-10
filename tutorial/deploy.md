@@ -203,6 +203,51 @@ Open your computer's browser and visit [http://127.0.0.1:5000](http://127.0.0.1:
 >
 > 如果访问不了，可能是端口被屏蔽或占用。如遇这种情况，建议在 VMware 中安装带有图形界面的 Ubuntu 26.04，按照相同方法安装好后，用虚拟机本身的浏览器访问操作界面。
 
+### 1.5 Next Time Startup / 下次启动开发环境
+
+After the initial setup, you only need these steps to start the development environment next time:
+
+首次安装完成后，下次启动开发环境只需以下步骤：
+
+**Step 1:** Open WSL terminal / 打开 WSL 终端
+
+**Step 2:** Activate the Python virtual environment / 进入 Python 虚拟环境
+
+```bash
+source ~/nupack-env/bin/activate
+```
+
+**Step 3:** Navigate to the project directory / 进入 nupack-webapp 文件夹
+
+```bash
+cd ~/nupack-webapp
+```
+
+> If you installed to a different location, use that path instead.
+>
+> 如果安装到了其他位置，请使用对应路径。例如：`cd /mnt/d/nupack-webapp`
+
+**Step 4:** Start the server / 启动服务
+
+```bash
+./start.sh
+```
+
+**Step 5:** Open VS Code and connect to WSL / 打开 VS Code，连接 WSL
+
+1. Open VS Code
+2. Press **Ctrl + Shift + P**
+3. Type `WSL: Connect to WSL` and select it
+4. VS Code will connect to the WSL environment
+
+> You should see a green **WSL: Ubuntu** indicator in the bottom-left corner.
+>
+> 左下角应显示绿色的 **WSL: Ubuntu** 字样。
+
+Now open your browser at [http://127.0.0.1:5000](http://127.0.0.1:5000) and start working!
+
+打开浏览器访问 [http://127.0.0.1:5000](http://127.0.0.1:5000) 即可开始工作！
+
 ---
 
 ## Part 2: VS Code + WSL + Claude Code + MiMo / 第二部分：VS Code + WSL + Claude Code + MiMo

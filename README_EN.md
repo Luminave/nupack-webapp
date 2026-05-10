@@ -134,6 +134,32 @@ pip install -r requirements.txt
 python3 app.py
 ```
 
+## 🔄 How to Update
+
+If you have an older version, follow these steps to update:
+
+```bash
+# Go to the parent directory of the old version
+cd ~
+
+# Remove the old version folder
+rm -rf nupack-webapp
+
+# Clone the latest version
+git clone https://github.com/Luminave/nupack-webapp.git
+
+# Enter directory
+cd nupack-webapp
+
+# Re-install (if needed)
+./install.sh
+
+# Start
+./start.sh
+```
+
+> ⚠️ Note: Before deleting the old folder, make sure you have no custom code changes to preserve.
+
 ## 📖 Usage Examples
 
 ### Single-Strand Analysis
